@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Search,
   Download,
@@ -25,36 +25,81 @@ import {
   LogOut,
   CreditCard,
   Lock,
-  Share2,
+  ChevronRight,
+  Clock,
+  Navigation,
+  FileText,
+  DollarSign,
+  MessageSquare,
+  Check,
 } from "lucide-react";
 
-function InstagramIcon({ className = "h-3 w-3" }: { className?: string }) {
+function InstagramIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
     </svg>
   );
 }
 
-function FacebookIcon({ className = "h-3 w-3" }: { className?: string }) {
+function FacebookIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
     </svg>
   );
 }
 
-function LinkedinIcon({ className = "h-3 w-3" }: { className?: string }) {
+function LinkedinIcon({ className = "h-3.5 w-3.5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
-      <rect width="4" height="12" x="2" y="9"/>
-      <circle cx="4" cy="4" r="2"/>
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect width="4" height="12" x="2" y="9" />
+      <circle cx="4" cy="4" r="2" />
     </svg>
   );
 }
+
+const POPULAR_NICHES = [
+  { name: "Dentists & Orthodontists", category: "Healthcare", estDeal: "$1,500 - $3,000" },
+  { name: "Roofing Contractors", category: "Home Services", estDeal: "$1,200 - $2,500" },
+  { name: "Plumbing & Drainage", category: "Home Services", estDeal: "$800 - $1,500" },
+  { name: "HVAC Heating & Air", category: "Home Services", estDeal: "$1,000 - $2,000" },
+  { name: "Coffee Shops & Cafes", category: "Food & Beverage", estDeal: "$500 - $1,000" },
+  { name: "Restaurants & Pizzerias", category: "Food & Beverage", estDeal: "$600 - $1,200" },
+  { name: "Real Estate Agencies", category: "Property", estDeal: "$2,000 - $5,000" },
+  { name: "Law Firms & Attorneys", category: "Legal", estDeal: "$2,500 - $6,000" },
+  { name: "Commercial Cleaning", category: "B2B Services", estDeal: "$700 - $1,500" },
+  { name: "Cosmetic & Plastic Surgery", category: "Healthcare", estDeal: "$3,000 - $8,000" },
+  { name: "Auto Repair & Mechanics", category: "Automotive", estDeal: "$600 - $1,200" },
+  { name: "Fitness Gyms & Studios", category: "Health & Fitness", estDeal: "$800 - $1,500" },
+  { name: "Electricians", category: "Home Services", estDeal: "$800 - $1,800" },
+  { name: "Veterinary Clinics", category: "Pet Care", estDeal: "$1,000 - $2,200" },
+];
+
+const POPULAR_CITIES = [
+  { name: "London, United Kingdom", region: "UK" },
+  { name: "Manchester, United Kingdom", region: "UK" },
+  { name: "New York, NY, USA", region: "USA" },
+  { name: "Austin, TX, USA", region: "USA" },
+  { name: "Houston, TX, USA", region: "USA" },
+  { name: "Miami, FL, USA", region: "USA" },
+  { name: "Los Angeles, CA, USA", region: "USA" },
+  { name: "Chicago, IL, USA", region: "USA" },
+  { name: "Dallas, TX, USA", region: "USA" },
+  { name: "Toronto, ON, Canada", region: "Canada" },
+  { name: "Vancouver, BC, Canada", region: "Canada" },
+  { name: "Sydney, NSW, Australia", region: "Australia" },
+  { name: "Melbourne, VIC, Australia", region: "Australia" },
+  { name: "Dubai, United Arab Emirates", region: "UAE" },
+  { name: "Dhanmondi, Dhaka, Bangladesh", region: "Bangladesh" },
+  { name: "Gulshan, Dhaka, Bangladesh", region: "Bangladesh" },
+  { name: "Banani, Dhaka, Bangladesh", region: "Bangladesh" },
+  { name: "Uttara, Dhaka, Bangladesh", region: "Bangladesh" },
+  { name: "Singapore", region: "Asia" },
+];
 
 interface SocialLinks {
   instagram?: string;
@@ -105,6 +150,12 @@ export default function Dashboard() {
   const [savedLeads, setSavedLeads] = useState<Lead[]>([]);
   const [activeTab, setActiveTab] = useState<"ALL" | "NO_WEBSITE" | "LOW_RATING" | "HAS_EMAIL" | "HAS_PHONE" | "CRM">("ALL");
 
+  // Autocomplete Suggestions State
+  const [showNicheSuggestions, setShowNicheSuggestions] = useState(false);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const nicheRef = useRef<HTMLDivElement>(null);
+  const cityRef = useRef<HTMLDivElement>(null);
+
   // Auth State
   const [user, setUser] = useState<{ name: string; email: string; plan: string } | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -114,7 +165,8 @@ export default function Dashboard() {
   const [authPassword, setAuthPassword] = useState("");
 
   // Modals
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [detailedLead, setDetailedLead] = useState<Lead | null>(null);
+  const [leadNoteInput, setLeadNoteInput] = useState("");
   const [copiedPitch, setCopiedPitch] = useState(false);
   const [showPricingModal, setShowPricingModal] = useState(false);
   const [auditLead, setAuditLead] = useState<Lead | null>(null);
@@ -122,20 +174,17 @@ export default function Dashboard() {
   const [auditLoading, setAuditLoading] = useState(false);
 
   useEffect(() => {
-    // Check saved session
     const savedUser = localStorage.getItem("maplead_user");
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
       } catch (e) {}
     } else {
-      // Default demo logged-in user
       const defaultUser = { name: "Mejbaur Bahar", email: "fagun115946@gmail.com", plan: "Agency Pro ($99/mo)" };
       setUser(defaultUser);
       localStorage.setItem("maplead_user", JSON.stringify(defaultUser));
     }
 
-    // Load saved CRM leads
     const saved = localStorage.getItem("maplead_saved_leads");
     if (saved) {
       try {
@@ -143,7 +192,18 @@ export default function Dashboard() {
       } catch (e) {}
     }
 
+    function handleClickOutside(e: MouseEvent) {
+      if (nicheRef.current && !nicheRef.current.contains(e.target as Node)) {
+        setShowNicheSuggestions(false);
+      }
+      if (cityRef.current && !cityRef.current.contains(e.target as Node)) {
+        setShowCitySuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+
     fetchLeads(true);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   async function fetchLeads(sample = false) {
@@ -162,6 +222,8 @@ export default function Dashboard() {
     if (e) e.preventDefault();
     if (!keyword.trim()) return;
 
+    setShowNicheSuggestions(false);
+    setShowCitySuggestions(false);
     setLoading(true);
     setProgressMsg("Launching Docker scraper engine...");
 
@@ -200,9 +262,7 @@ export default function Dashboard() {
             setProgressMsg("");
             alert("Scraping completed. Found new leads.");
           }
-        } catch {
-          // ignore
-        }
+        } catch {}
       }, 4000);
     } catch (err: any) {
       setLoading(false);
@@ -211,7 +271,6 @@ export default function Dashboard() {
     }
   }
 
-  // Toggle Save to CRM
   function toggleSaveLead(lead: Lead) {
     let updated: Lead[];
     const exists = savedLeads.some((l) => l.id === lead.id);
@@ -224,14 +283,24 @@ export default function Dashboard() {
     localStorage.setItem("maplead_saved_leads", JSON.stringify(updated));
   }
 
-  // Update CRM Status
   function updateLeadStatus(id: string, status: "NEW" | "CONTACTED" | "IN_PROGRESS" | "CLOSED") {
     const updated = savedLeads.map((l) => (l.id === id ? { ...l, crmStatus: status } : l));
     setSavedLeads(updated);
     localStorage.setItem("maplead_saved_leads", JSON.stringify(updated));
+    if (detailedLead && detailedLead.id === id) {
+      setDetailedLead({ ...detailedLead, crmStatus: status });
+    }
   }
 
-  // Live Website Audit
+  function saveLeadNote(id: string) {
+    const updated = savedLeads.map((l) => (l.id === id ? { ...l, notes: leadNoteInput } : l));
+    setSavedLeads(updated);
+    localStorage.setItem("maplead_saved_leads", JSON.stringify(updated));
+    if (detailedLead && detailedLead.id === id) {
+      setDetailedLead({ ...detailedLead, notes: leadNoteInput });
+    }
+  }
+
   async function runWebsiteAudit(lead: Lead) {
     if (!lead.website) return;
     setAuditLead(lead);
@@ -259,7 +328,6 @@ export default function Dashboard() {
     }
   }
 
-  // Auth Handlers
   function handleAuthSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!authEmail.trim()) return;
@@ -300,7 +368,10 @@ export default function Dashboard() {
   const noWebsiteCount = leads.filter((l) => !l.website || l.website.length < 5).length;
   const hasPhoneCount = leads.filter((l) => l.phone && l.phone.length > 5).length;
   const hasEmailCount = leads.filter((l) => l.emails && l.emails.length > 5).length;
-  const avgRating = totalLeads > 0 ? (leads.reduce((acc, l) => acc + (l.review_rating || 0), 0) / totalLeads).toFixed(1) : "0.0";
+
+  // Filter autocomplete suggestions based on user keystrokes
+  const matchingNiches = POPULAR_NICHES.filter((n) => n.name.toLowerCase().includes(keyword.toLowerCase().trim()));
+  const matchingCities = POPULAR_CITIES.filter((c) => c.name.toLowerCase().includes(city.toLowerCase().trim()));
 
   function exportCSV() {
     if (filteredLeads.length === 0) return;
@@ -415,7 +486,7 @@ export default function Dashboard() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
-        {/* Search Hero Box */}
+        {/* Search Hero Box with Auto-Detecting Autocomplete */}
         <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-900/60 border border-slate-800 shadow-xl space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
             <div>
@@ -424,16 +495,16 @@ export default function Dashboard() {
                 Worldwide B2B Lead & Opportunity Prospector
               </h1>
               <p className="text-xs text-slate-400">
-                Extract verified phone numbers, direct emails, website URLs, and instant website technical audits with $0 API cost.
+                Type any business niche & city to see instant smart autocomplete and extract verified contact details.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-xs text-slate-400">High-ROI Niches:</span>
+              <span className="text-xs text-slate-400">Quick Picks:</span>
               <button
                 type="button"
                 onClick={() => {
-                  setKeyword("dentists");
-                  setCity("London, UK");
+                  setKeyword("Dentists & Orthodontists");
+                  setCity("London, United Kingdom");
                 }}
                 className="text-xs bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-md border border-slate-700 text-slate-300 transition"
               >
@@ -442,8 +513,8 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => {
-                  setKeyword("roofing contractors");
-                  setCity("Houston, TX");
+                  setKeyword("Roofing Contractors");
+                  setCity("Houston, TX, USA");
                 }}
                 className="text-xs bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-md border border-slate-700 text-slate-300 transition"
               >
@@ -452,8 +523,8 @@ export default function Dashboard() {
               <button
                 type="button"
                 onClick={() => {
-                  setKeyword("coffee shops");
-                  setCity("Dhanmondi, Dhaka");
+                  setKeyword("Coffee Shops & Cafes");
+                  setCity("Dhanmondi, Dhaka, Bangladesh");
                 }}
                 className="text-xs bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-md border border-slate-700 text-slate-300 transition"
               >
@@ -462,27 +533,92 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <form onSubmit={handleStartScrape} className="grid grid-cols-1 md:grid-cols-12 gap-3">
-            <div className="md:col-span-5 relative">
+          <form onSubmit={handleStartScrape} className="grid grid-cols-1 md:grid-cols-12 gap-3 relative">
+            {/* Business Niche Input with Auto-detect suggestions */}
+            <div ref={nicheRef} className="md:col-span-5 relative">
               <Building2 className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
               <input
                 type="text"
                 value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                placeholder="Business niche (e.g. Dentists, Real Estate, Plumbers)..."
+                onFocus={() => setShowNicheSuggestions(true)}
+                onChange={(e) => {
+                  setKeyword(e.target.value);
+                  setShowNicheSuggestions(true);
+                }}
+                placeholder="Type niche (e.g. Dentists, Roofing, Cafes)..."
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
               />
+
+              {/* Autocomplete Popup */}
+              {showNicheSuggestions && matchingNiches.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl z-40 max-h-60 overflow-y-auto divide-y divide-slate-800">
+                  <div className="px-3 py-1.5 bg-slate-950 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    High-Converting Business Niches
+                  </div>
+                  {matchingNiches.map((item, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setKeyword(item.name);
+                        setShowNicheSuggestions(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 hover:bg-slate-800 flex items-center justify-between text-xs transition"
+                    >
+                      <div>
+                        <div className="font-semibold text-white">{item.name}</div>
+                        <div className="text-[11px] text-slate-400">{item.category}</div>
+                      </div>
+                      <span className="text-[10px] font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                        Deal: {item.estDeal}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="md:col-span-4 relative">
+
+            {/* City & Country Input with Auto-detect suggestions */}
+            <div ref={cityRef} className="md:col-span-4 relative">
               <MapPin className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
               <input
                 type="text"
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="City & Country (e.g. London UK, Austin TX)..."
+                onFocus={() => setShowCitySuggestions(true)}
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  setShowCitySuggestions(true);
+                }}
+                placeholder="Type city (e.g. London UK, Austin TX)..."
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
               />
+
+              {/* Autocomplete Popup */}
+              {showCitySuggestions && matchingCities.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl z-40 max-h-60 overflow-y-auto divide-y divide-slate-800">
+                  <div className="px-3 py-1.5 bg-slate-950 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Popular Prospecting Cities
+                  </div>
+                  {matchingCities.map((item, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setCity(item.name);
+                        setShowCitySuggestions(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2.5 hover:bg-slate-800 flex items-center justify-between text-xs transition"
+                    >
+                      <div className="font-semibold text-white">{item.name}</div>
+                      <span className="text-[10px] text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                        {item.region}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+
             <div className="md:col-span-3">
               <button
                 type="submit"
@@ -602,7 +738,9 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <span className="text-xs text-slate-500">Showing {filteredLeads.length} qualified prospects</span>
+          <span className="text-xs text-slate-500">
+            Showing {filteredLeads.length} leads • Click any business for 360° details & pitch
+          </span>
         </div>
 
         {/* Leads Table */}
@@ -617,7 +755,7 @@ export default function Dashboard() {
                   <th className="py-3 px-4">Website & Socials</th>
                   <th className="py-3 px-4">Google Rating</th>
                   <th className="py-3 px-4 text-center">Opportunity</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-4 text-right">Details</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60">
@@ -627,8 +765,15 @@ export default function Dashboard() {
                   const opp = lead.opportunity || { score: 70, type: "SEO_OPTIMIZE", reasons: [] };
 
                   return (
-                    <tr key={lead.id} className="hover:bg-slate-800/40 transition">
-                      <td className="py-3 px-3 text-center">
+                    <tr
+                      key={lead.id}
+                      onClick={() => {
+                        setDetailedLead(lead);
+                        setLeadNoteInput(lead.notes || "");
+                      }}
+                      className="hover:bg-slate-800/60 cursor-pointer transition group"
+                    >
+                      <td className="py-3 px-3 text-center" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => toggleSaveLead(lead)}
                           title={isSaved ? "Remove from CRM" : "Save to CRM"}
@@ -640,24 +785,13 @@ export default function Dashboard() {
                         </button>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-semibold text-white flex items-center gap-1.5">
+                        <div className="font-semibold text-white group-hover:text-amber-400 flex items-center gap-1.5 transition">
                           {lead.title}
-                          {activeTab === "CRM" && (
-                            <select
-                              value={lead.crmStatus || "NEW"}
-                              onChange={(e) => updateLeadStatus(lead.id, e.target.value as any)}
-                              className="text-[10px] bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 text-amber-400"
-                            >
-                              <option value="NEW">New</option>
-                              <option value="CONTACTED">Contacted</option>
-                              <option value="IN_PROGRESS">In Progress</option>
-                              <option value="CLOSED">Closed Won</option>
-                            </select>
-                          )}
+                          <ChevronRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-amber-400 group-hover:translate-x-0.5 transition" />
                         </div>
                         <div className="text-xs text-slate-500 truncate max-w-xs">{lead.address}</div>
                       </td>
-                      <td className="py-3 px-4 text-xs font-mono space-y-1">
+                      <td className="py-3 px-4 text-xs font-mono space-y-1" onClick={(e) => e.stopPropagation()}>
                         {lead.phone ? (
                           <a href={`tel:${lead.phone}`} className="flex items-center gap-1.5 text-amber-400 hover:underline">
                             <Phone className="h-3 w-3" />
@@ -676,7 +810,7 @@ export default function Dashboard() {
                           </a>
                         ) : null}
                       </td>
-                      <td className="py-3 px-4 text-xs space-y-1.5">
+                      <td className="py-3 px-4 text-xs space-y-1.5" onClick={(e) => e.stopPropagation()}>
                         {hasWebsite ? (
                           <div className="flex items-center gap-2">
                             <a
@@ -693,7 +827,7 @@ export default function Dashboard() {
                               onClick={() => runWebsiteAudit(lead)}
                               className="text-[10px] bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/20 transition"
                             >
-                              Audit Site
+                              Audit
                             </button>
                           </div>
                         ) : (
@@ -703,22 +837,21 @@ export default function Dashboard() {
                           </span>
                         )}
 
-                        {/* Social Links */}
                         {lead.socials && Object.keys(lead.socials).length > 0 && (
                           <div className="flex items-center gap-2 text-slate-400">
                             {lead.socials.instagram && (
                               <a href={lead.socials.instagram} target="_blank" rel="noreferrer" className="hover:text-rose-400">
-                                <InstagramIcon className="h-3 w-3" />
+                                <InstagramIcon />
                               </a>
                             )}
                             {lead.socials.facebook && (
                               <a href={lead.socials.facebook} target="_blank" rel="noreferrer" className="hover:text-blue-400">
-                                <FacebookIcon className="h-3 w-3" />
+                                <FacebookIcon />
                               </a>
                             )}
                             {lead.socials.linkedin && (
                               <a href={lead.socials.linkedin} target="_blank" rel="noreferrer" className="hover:text-cyan-400">
-                                <LinkedinIcon className="h-3 w-3" />
+                                <LinkedinIcon />
                               </a>
                             )}
                           </div>
@@ -745,12 +878,9 @@ export default function Dashboard() {
                         </span>
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <button
-                          onClick={() => setSelectedLead(lead)}
-                          className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-semibold transition border border-amber-500/20"
-                        >
-                          Pitch Script
-                        </button>
+                        <span className="text-xs text-amber-400 font-medium group-hover:underline">
+                          View Details ➔
+                        </span>
                       </td>
                     </tr>
                   );
@@ -768,6 +898,220 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Business 360° Detailed Intelligence Drawer */}
+      {detailedLead && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl relative my-6">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-800 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    {detailedLead.category || "Local Business"}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center gap-1">
+                    <DollarSign className="h-3 w-3" />
+                    Est. Value: {detailedLead.website ? "$500 - $1,500 SEO Contract" : "$800 - $2,500 Web Design"}
+                  </span>
+                </div>
+                <h2 className="text-2xl font-black text-white mt-1.5">{detailedLead.title}</h2>
+                <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-1">
+                  <MapPin className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+                  {detailedLead.address}
+                </p>
+              </div>
+              <button
+                onClick={() => setDetailedLead(null)}
+                className="text-slate-400 hover:text-white text-sm px-2.5 py-1.5 bg-slate-800 rounded-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Direct Contact & Outreach Channels */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[11px] font-medium text-slate-400">Direct Phone Number</span>
+                <div className="font-mono text-sm font-bold text-amber-400 flex items-center justify-between">
+                  <span>{detailedLead.phone || "Not listed on Google"}</span>
+                  {detailedLead.phone && (
+                    <div className="flex items-center gap-1.5">
+                      <a
+                        href={`tel:${detailedLead.phone}`}
+                        className="p-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs"
+                        title="Call"
+                      >
+                        Call
+                      </a>
+                      <a
+                        href={`https://wa.me/${detailedLead.phone.replace(/[^0-9]/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-semibold flex items-center gap-1"
+                      >
+                        WhatsApp
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[11px] font-medium text-slate-400">Public Business Email</span>
+                <div className="font-mono text-sm font-bold text-cyan-400 flex items-center justify-between">
+                  <span className="truncate max-w-[160px]">{detailedLead.emails || "None discovered"}</span>
+                  {detailedLead.emails && (
+                    <a
+                      href={`mailto:${detailedLead.emails.split(",")[0]}`}
+                      className="px-2 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold flex items-center gap-1"
+                    >
+                      Send Mail
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Website & Social Channels */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-slate-400" />
+                <span className="text-xs text-slate-400">Website:</span>
+                {detailedLead.website ? (
+                  <a
+                    href={detailedLead.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs text-emerald-400 font-semibold hover:underline flex items-center gap-1"
+                  >
+                    {detailedLead.website}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                ) : (
+                  <span className="text-xs text-rose-400 font-bold bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                    🚨 No Website (Prime Client for Web Development)
+                  </span>
+                )}
+              </div>
+
+              {detailedLead.website && (
+                <button
+                  onClick={() => runWebsiteAudit(detailedLead)}
+                  className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold"
+                >
+                  Run Speed & SEO Audit
+                </button>
+              )}
+            </div>
+
+            {/* Google Rating Breakdown */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-xs text-slate-400">Google Maps Authority:</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center text-amber-400 font-bold text-lg">
+                    <Star className="h-5 w-5 fill-amber-400 mr-1" />
+                    {detailedLead.review_rating || "—"} / 5.0
+                  </div>
+                  <span className="text-xs text-slate-400">({detailedLead.review_count || 0} reviews)</span>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className="text-xs text-slate-400">Opportunity Score:</span>
+                <div className="text-xl font-black text-rose-400 mt-1">
+                  {detailedLead.opportunity?.score || 95}/100
+                </div>
+              </div>
+            </div>
+
+            {/* CRM Notes & Pipeline Status */}
+            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <BookmarkCheck className="h-4 w-4 text-indigo-400" />
+                  CRM Status & Private Notes
+                </span>
+                <select
+                  value={detailedLead.crmStatus || "NEW"}
+                  onChange={(e) => updateLeadStatus(detailedLead.id, e.target.value as any)}
+                  className="bg-slate-900 border border-slate-700 text-xs text-amber-400 rounded-lg px-2.5 py-1 focus:outline-none"
+                >
+                  <option value="NEW">Status: New Lead</option>
+                  <option value="CONTACTED">Status: Contacted via WhatsApp/Email</option>
+                  <option value="IN_PROGRESS">Status: Proposal Sent</option>
+                  <option value="CLOSED">Status: Closed Won ($$)</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={leadNoteInput}
+                  onChange={(e) => setLeadNoteInput(e.target.value)}
+                  placeholder="Add note (e.g. Spoke with manager, asked for demo next Tuesday)..."
+                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none"
+                />
+                <button
+                  onClick={() => {
+                    saveLeadNote(detailedLead.id);
+                    alert("Note saved to CRM!");
+                  }}
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold"
+                >
+                  Save Note
+                </button>
+              </div>
+            </div>
+
+            {/* Customized Pitch Script */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                  Personalized Client Outreach Script
+                </label>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(getPitchScript(detailedLead));
+                    setCopiedPitch(true);
+                    setTimeout(() => setCopiedPitch(false), 2000);
+                  }}
+                  className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 font-medium"
+                >
+                  {copiedPitch ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copiedPitch ? "Copied Script!" : "Copy Script"}
+                </button>
+              </div>
+              <textarea
+                readOnly
+                rows={6}
+                value={getPitchScript(detailedLead)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 leading-relaxed font-mono focus:outline-none"
+              />
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+              <button
+                onClick={() => toggleSaveLead(detailedLead)}
+                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded-xl text-xs font-semibold flex items-center gap-1.5"
+              >
+                <Bookmark className="h-3.5 w-3.5" />
+                {savedLeads.some((l) => l.id === detailedLead.id) ? "Saved in CRM ✓" : "Save to CRM"}
+              </button>
+
+              <button
+                onClick={() => setDetailedLead(null)}
+                className="px-5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold transition"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Website Audit Modal */}
       {auditLead && (
@@ -848,101 +1192,6 @@ export default function Dashboard() {
                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold"
               >
                 Close Audit
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Outreach Pitch Modal */}
-      {selectedLead && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="font-bold text-lg text-white">{selectedLead.title}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">{selectedLead.address}</p>
-              </div>
-              <button onClick={() => setSelectedLead(null)} className="text-slate-400 hover:text-white text-sm px-2 py-1 bg-slate-800 rounded-lg">
-                ✕
-              </button>
-            </div>
-
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Opportunity Score:</span>
-                <span className="font-bold text-amber-400">{selectedLead.opportunity?.score || 85}/100</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Direct Phone:</span>
-                <span className="font-mono text-emerald-400">{selectedLead.phone || "Not listed"}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Email Address:</span>
-                <span className="font-mono text-cyan-400">{selectedLead.emails || "Not publicly listed"}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Website Status:</span>
-                <span className={selectedLead.website ? "text-emerald-400" : "text-rose-400 font-semibold"}>
-                  {selectedLead.website ? selectedLead.website : "Missing (Prime Web Design Lead)"}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                  Ready-to-Send Outreach Message
-                </label>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(getPitchScript(selectedLead));
-                    setCopiedPitch(true);
-                    setTimeout(() => setCopiedPitch(false), 2000);
-                  }}
-                  className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 font-medium"
-                >
-                  {copiedPitch ? <CheckCircle className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-                  {copiedPitch ? "Copied!" : "Copy Pitch"}
-                </button>
-              </div>
-              <textarea
-                readOnly
-                rows={8}
-                value={getPitchScript(selectedLead)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 leading-relaxed font-mono focus:outline-none"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              {selectedLead.phone && (
-                <a
-                  href={`https://wa.me/${selectedLead.phone.replace(/[^0-9]/g, "")}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
-                >
-                  <Phone className="h-3.5 w-3.5" />
-                  Open WhatsApp
-                </a>
-              )}
-              {selectedLead.emails && (
-                <a
-                  href={`mailto:${selectedLead.emails.split(",")[0]}?subject=${encodeURIComponent(
-                    `Quick inquiry for ${selectedLead.title}`
-                  )}&body=${encodeURIComponent(getPitchScript(selectedLead))}`}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
-                >
-                  <Mail className="h-3.5 w-3.5" />
-                  Send Email
-                </a>
-              )}
-              <button
-                onClick={() => setSelectedLead(null)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition"
-              >
-                Close
               </button>
             </div>
           </div>
@@ -1085,9 +1334,7 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* Plans Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Starter Plan */}
               <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
                 <div>
                   <h4 className="font-bold text-white text-base">Starter</h4>
@@ -1114,7 +1361,6 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              {/* Pro Plan (Most Popular) */}
               <div className="p-5 rounded-2xl bg-gradient-to-b from-amber-500/10 to-slate-950 border-2 border-amber-500/40 space-y-4 relative">
                 <div className="absolute -top-3 right-4 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500 text-slate-950 shadow">
                   Most Popular
@@ -1144,7 +1390,6 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              {/* Agency Plan */}
               <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
                 <div>
                   <h4 className="font-bold text-white text-base">Scale Agency</h4>
