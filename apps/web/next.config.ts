@@ -1,9 +1,14 @@
 import type { NextConfig } from "next";
 
+const isGithubPages = process.env.DEPLOY_TARGET === "gh-pages";
+
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  output: isGithubPages ? "export" : undefined,
+  basePath: isGithubPages ? "/maplead-intelligence" : "",
+  assetPrefix: isGithubPages ? "/maplead-intelligence/" : undefined,
+  images: {
+    unoptimized: true,
+  },
   turbopack: {
     rules: {
       "*.css": {
