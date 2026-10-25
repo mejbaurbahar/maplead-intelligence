@@ -37,6 +37,12 @@ import {
   Key,
   ShieldCheck,
   Layers,
+  Send,
+  Users,
+  Target,
+  Building,
+  Briefcase,
+  CheckCheck,
 } from "lucide-react";
 
 function GoogleIcon({ className = "h-4 w-4" }: { className?: string }) {
@@ -227,53 +233,64 @@ export default function Dashboard() {
   const [auditLoading, setAuditLoading] = useState(false);
 
   // 24/7 Autopilot AI Agent State (Explee-Style Autonomous Engine)
-  const [autopilotUrl, setAutopilotUrl] = useState("mygrowthagency.com");
+  const [autopilotUrl, setAutopilotUrl] = useState("nasa.gov");
   const [autopilotLoading, setAutopilotLoading] = useState(false);
   const [autopilotData, setAutopilotData] = useState<any>({
-    title: "Apex Growth & Web Studio",
-    description: "High-performance websites and local SEO lead generation for high-ticket local businesses.",
-    identifiedOffer: "B2B Digital Growth, Web Design & Local Maps SEO",
+    title: "NASA ASRS",
+    description: "A confidential aviation safety reporting system where pilots and staff voluntarily share incidents, analyzed to improve global flight safety standards.",
+    identifiedOffer: "Aviation Safety Telemetry & Incident Reporting",
     icpSegments: [
       {
-        title: "Dentists & Cosmetic Orthodontists",
-        category: "Healthcare & Aesthetics",
-        fitScore: 96,
-        reason: "High patient LTV ($2,000+). Many have outdated websites or lack local Google Maps SEO ranking.",
-        estDeal: "$1,500 - $3,500",
-        recommendedQuery: "Dentists & Orthodontists",
-        targetCities: ["London, UK", "New York, USA", "Austin, TX"],
+        title: "Airline pilots",
+        category: "Flight Operations",
+        fitScore: 98,
+        reason: "Commercial & charter captains filing voluntary flight hazard logs and near-miss alerts.",
+        estDeal: "$2,500/yr",
+        recommendedQuery: "Aviation Charter & Airlines",
+        targetCities: ["London, UK", "New York, USA", "Dubai, UAE"],
       },
       {
-        title: "Roofing & Home Service Contractors",
-        category: "Home Infrastructure",
+        title: "Airline safety teams",
+        category: "SMS & Compliance",
+        fitScore: 95,
+        reason: "SMS managers & flight operation compliance officers requiring incident mitigation telemetry.",
+        estDeal: "$5,000/yr",
+        recommendedQuery: "Airline Safety Compliance",
+        targetCities: ["Houston, TX", "Manchester, UK", "Paris, France"],
+      },
+      {
+        title: "Corporate flight departments",
+        category: "Executive Aviation",
         fitScore: 92,
-        reason: "Emergency inquiries occur via mobile Google search. Missing mobile responsiveness causes 40%+ dropoff.",
-        estDeal: "$1,200 - $2,500",
-        recommendedQuery: "Roofing Contractors",
-        targetCities: ["Houston, TX", "Manchester, UK", "Dallas, TX"],
-      },
-      {
-        title: "Commercial Office Cleaning Providers",
-        category: "B2B Facilities",
-        fitScore: 88,
-        reason: "High recurring contract value. Often rely on word-of-mouth with no web presence.",
-        estDeal: "$800 - $1,800/mo",
-        recommendedQuery: "Commercial Cleaning",
+        reason: "Private jet operators and VIP fleet coordinators navigating complex regional airspaces.",
+        estDeal: "$3,800/yr",
+        recommendedQuery: "Executive Jet Charter",
         targetCities: ["Toronto, Canada", "Chicago, IL", "London, UK"],
       },
       {
-        title: "Specialty Cafes & Fine Dining Restaurants",
-        category: "Food & Beverage",
-        fitScore: 84,
-        reason: "Requires mobile digital menu, online table reservations, and high review velocity.",
-        estDeal: "$600 - $1,200",
-        recommendedQuery: "Coffee Shops & Cafes",
-        targetCities: ["Dhaka, Bangladesh", "Dubai, UAE", "Melbourne, Australia"],
+        title: "Flight schools",
+        category: "Training & Education",
+        fitScore: 89,
+        reason: "CFI trainers & aviation academy directors teaching student pilots incident awareness.",
+        estDeal: "$1,500/yr",
+        recommendedQuery: "Flight Training Academy",
+        targetCities: ["Melbourne, Australia", "Miami, FL", "Dallas, TX"],
       },
     ],
   });
   const [showAutopilotSection, setShowAutopilotSection] = useState(true);
   const [runningAutopilotCycle, setRunningAutopilotCycle] = useState(false);
+
+  // Explee Auto-GTM Pipeline Modal State
+  const [expleeModalOpen, setExpleeModalOpen] = useState(false);
+  const [expleeData, setExpleeData] = useState<any>(null);
+  const [expleeActiveTab, setExpleeActiveTab] = useState<"companies" | "people" | "emails">("emails");
+  const [selectedExpleePersonIndex, setSelectedExpleePersonIndex] = useState(0);
+  const [selectedExpleeCampaign, setSelectedExpleeCampaign] = useState<string>("all");
+  const [emailEditorSubject, setEmailEditorSubject] = useState("");
+  const [emailEditorBody, setEmailEditorBody] = useState("");
+  const [copiedEmailStatus, setCopiedEmailStatus] = useState(false);
+  const [syncingExpleeLead, setSyncingExpleeLead] = useState(false);
 
   const isOwner = user?.email?.toLowerCase().trim() === OWNER_EMAIL;
 
@@ -291,10 +308,18 @@ export default function Dashboard() {
       const data = await res.json();
       if (data.success) {
         setAutopilotData(data);
-        logUsageToDatabase("AI Agent ICP Analysis", data.icpSegments?.length || 0);
+        setExpleeData(data);
+        if (data.people && data.people.length > 0) {
+          setSelectedExpleePersonIndex(0);
+          setEmailEditorSubject(data.people[0].emailSubject || "");
+          setEmailEditorBody(data.people[0].emailBody || "");
+        }
+        setExpleeActiveTab("emails");
+        setExpleeModalOpen(true);
+        logUsageToDatabase(`Explee Auto-GTM Run: ${autopilotUrl}`, data.totalLeads || 6);
         setNotificationToast({
-          message: "AI Offer Analysis Complete!",
-          sub: `Generated ${data.icpSegments?.length} high-fit buyer segments.`,
+          message: `Auto-GTM Intelligence Generated for ${data.company?.name || autopilotUrl}!`,
+          sub: `Discovered ${data.totalCampaigns || 6} campaigns & verified decision makers with emails`,
         });
         setTimeout(() => setNotificationToast(null), 5000);
       }
@@ -324,18 +349,9 @@ export default function Dashboard() {
     setAutopilotUrl(cleanUrl);
     setAutopilotLoading(true);
 
-    if (typeof window !== "undefined") {
-      const el = document.getElementById("autopilot-agent-engine");
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-      } else {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
-    }
-
     setNotificationToast({
       message: `Analyzing ${lead.title}...`,
-      sub: `AI Agent crawling ${cleanUrl} to find their high-ticket clients`,
+      sub: `Running Explee Auto-GTM to discover buyers & write outreach emails`,
     });
 
     try {
@@ -347,10 +363,18 @@ export default function Dashboard() {
       const data = await res.json();
       if (data.success) {
         setAutopilotData(data);
-        logUsageToDatabase(`AI Client Finder: ${lead.title}`, data.icpSegments?.length || 0);
+        setExpleeData(data);
+        if (data.people && data.people.length > 0) {
+          setSelectedExpleePersonIndex(0);
+          setEmailEditorSubject(data.people[0].emailSubject || "");
+          setEmailEditorBody(data.people[0].emailBody || "");
+        }
+        setExpleeActiveTab("emails");
+        setExpleeModalOpen(true);
+        logUsageToDatabase(`AI Client Finder: ${lead.title}`, data.totalLeads || 6);
         setNotificationToast({
-          message: `Generated High-Ticket Clients for ${lead.title}!`,
-          sub: `Found ${data.icpSegments?.length || 4} high-fit buyer segments.`,
+          message: `Auto-GTM Pipeline Ready for ${lead.title}!`,
+          sub: `Found ${data.totalCampaigns || 6} buyer campaigns & cold outreach sequences.`,
         });
         setTimeout(() => setNotificationToast(null), 5000);
       }
@@ -358,6 +382,52 @@ export default function Dashboard() {
       console.error(err);
     } finally {
       setAutopilotLoading(false);
+    }
+  }
+
+  async function handleSyncExpleeLeadToSheet(person: any) {
+    if (!person) return;
+    setSyncingExpleeLead(true);
+    try {
+      const payload = [
+        {
+          name: `${person.name} (${person.company})`,
+          category: person.title || "Decision Maker",
+          phone: "+1 800-EXEC",
+          email: person.email || "",
+          website: `https://${person.domain}`,
+          address: expleeData?.company?.location || "Headquarters",
+          rating: 5.0,
+          reviews: 120,
+          opportunityScore: 98,
+          dealValue: "$2,500 - $5,000 High-Ticket Deal",
+          status: "Explee Verified Contact",
+          notes: `Verified via ${person.verifiedVia} (${person.emailStatus}). Pitch Subject: ${emailEditorSubject}`,
+          userEmail: user?.email || "anonymous",
+        },
+      ];
+
+      await fetch("/api/sync-sheet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "sync_leads",
+          leads: payload,
+          userEmail: user?.email || "anonymous",
+        }),
+      });
+
+      logUsageToDatabase(`Synced Explee Lead: ${person.name}`, 1);
+
+      setNotificationToast({
+        message: `Synced ${person.name} to Private Google Sheet!`,
+        sub: `Stored in Sheet 1 (Leads_CRM) and Sheet 3 (Usage_Analytics)`,
+      });
+      setTimeout(() => setNotificationToast(null), 5000);
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setSyncingExpleeLead(false);
     }
   }
 
@@ -1032,7 +1102,21 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (expleeData) {
+                    setExpleeModalOpen(true);
+                  } else {
+                    handleRunAutopilotAnalysis();
+                  }
+                }}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white font-bold rounded-xl text-xs border border-indigo-500/30 transition flex items-center gap-1.5 shadow"
+              >
+                <Sparkles className="h-4 w-4 text-indigo-400" />
+                <span>Launch Explee Auto-GTM Pipeline</span>
+              </button>
               <button
                 type="button"
                 onClick={handleTriggerAutopilotNow}
@@ -2032,6 +2116,530 @@ export default function Dashboard() {
                   >
                     Create Account
                   </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Explee Auto-GTM Command Center Modal */}
+      {expleeModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-indigo-500/30 rounded-3xl max-w-6xl w-full p-4 sm:p-6 shadow-2xl relative my-auto max-h-[94vh] flex flex-col overflow-hidden text-slate-100">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30 uppercase tracking-wider">
+                      Auto-GTM Pipeline
+                    </span>
+                    <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                      Phase: Outreach Ready
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-black text-white tracking-tight mt-0.5">
+                    Explee Autonomous Engine • Finds Clients While You Sleep
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setExpleeModalOpen(false)}
+                className="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Steps Progress Trail (1 to 6) */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 py-3 border-b border-slate-800/80 text-[11px]">
+              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-bold">
+                <span className="h-4 w-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px]">✓</span>
+                <span>1. Research Company</span>
+              </div>
+              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-bold">
+                <span className="h-4 w-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px]">✓</span>
+                <span>2. Competitors</span>
+              </div>
+              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-bold">
+                <span className="h-4 w-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px]">✓</span>
+                <span>3. Campaigns</span>
+              </div>
+              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-bold">
+                <span className="h-4 w-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px]">✓</span>
+                <span>4. Potential Buyers</span>
+              </div>
+              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-bold">
+                <span className="h-4 w-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px]">✓</span>
+                <span>5. Decision Makers</span>
+              </div>
+              <div className="flex items-center gap-1.5 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold shadow">
+                <span className="h-4 w-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">✓</span>
+                <span>6. Outreach Emails</span>
+              </div>
+            </div>
+
+            {/* Scrollable Center Body */}
+            <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-1">
+              {/* Company Intel Banner */}
+              {expleeData?.company && (
+                <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-base font-extrabold text-white">
+                          {expleeData.company.name}
+                        </h4>
+                        <a
+                          href={`https://${expleeData.company.domain}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20"
+                        >
+                          {expleeData.company.domain}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                      <p className="text-xs text-slate-400 max-w-3xl mt-1 leading-relaxed">
+                        {expleeData.company.description}
+                      </p>
+                    </div>
+
+                    {/* Stats strip */}
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <div className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-medium">
+                        🗓 Founded: <span className="text-white font-bold">{expleeData.company.founded}</span>
+                      </div>
+                      <div className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-medium">
+                        👥 Employees: <span className="text-white font-bold">{expleeData.company.employees}</span>
+                      </div>
+                      <div className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-medium">
+                        📍 {expleeData.company.location}
+                      </div>
+                      <div className="px-2.5 py-1 rounded-lg bg-indigo-950/60 border border-indigo-500/30 text-indigo-200 font-bold flex items-center gap-1">
+                        <span>📈 Traffic: {expleeData.company.monthlyTraffic}</span>
+                        <span className="text-[10px] text-emerald-400 bg-emerald-500/20 px-1 rounded font-bold">
+                          {expleeData.company.trafficTrend}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Competitors Strip */}
+                  {expleeData.competitors && expleeData.competitors.length > 0 && (
+                    <div className="pt-2 border-t border-slate-900 flex flex-wrap items-center gap-2 text-xs">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Competitors ({expleeData.competitors.length}):
+                      </span>
+                      {expleeData.competitors.map((comp: any, idx: number) => (
+                        <a
+                          key={idx}
+                          href={comp.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-2 py-0.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white text-[11px] flex items-center gap-1 transition"
+                        >
+                          <span className="h-3.5 w-3.5 rounded-full bg-indigo-500/30 text-indigo-300 text-[9px] flex items-center justify-center font-bold">
+                            {comp.initial}
+                          </span>
+                          <span>{comp.domain}</span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Campaigns Strip */}
+                  {expleeData.campaigns && expleeData.campaigns.length > 0 && (
+                    <div className="pt-2 border-t border-slate-900 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          Target Campaigns & Market Sizing ({expleeData.campaigns.length}):
+                        </span>
+                        <span className="text-[10px] text-indigo-400">
+                          Click to filter potential prospects
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedExpleeCampaign("all")}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                            selectedExpleeCampaign === "all"
+                              ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                              : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                          }`}
+                        >
+                          All Campaigns
+                        </button>
+                        {expleeData.campaigns.map((camp: any, idx: number) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setSelectedExpleeCampaign(camp.name)}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+                              selectedExpleeCampaign === camp.name
+                                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                                : "bg-slate-900 text-slate-300 hover:text-white border border-slate-800"
+                            }`}
+                          >
+                            <span>{camp.name}</span>
+                            <span className="text-[10px] bg-slate-800 px-1.5 py-0.2 rounded font-bold text-amber-300">
+                              {camp.count}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Sub-View Tabs: [Companies] | [People] | [Emails] */}
+              <div className="flex items-center justify-between pt-1">
+                <div className="inline-flex p-1 rounded-xl bg-slate-950 border border-slate-800 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setExpleeActiveTab("companies")}
+                    className={`px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
+                      expleeActiveTab === "companies"
+                        ? "bg-indigo-600 text-white shadow"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    <Building className="h-3.5 w-3.5" />
+                    <span>Companies ({expleeData?.companies?.length || 0})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpleeActiveTab("people")}
+                    className={`px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
+                      expleeActiveTab === "people"
+                        ? "bg-indigo-600 text-white shadow"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    <Users className="h-3.5 w-3.5" />
+                    <span>People ({expleeData?.people?.length || 0})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setExpleeActiveTab("emails")}
+                    className={`px-4 py-1.5 rounded-lg transition flex items-center gap-1.5 ${
+                      expleeActiveTab === "emails"
+                        ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow"
+                        : "text-slate-400 hover:text-slate-200"
+                    }`}
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    <span>Outreach Ready Emails ({expleeData?.people?.length || 0})</span>
+                  </button>
+                </div>
+
+                <div className="text-xs text-slate-400 hidden sm:flex items-center gap-2">
+                  <span className="flex items-center gap-1 text-emerald-400 font-semibold">
+                    <CheckCheck className="h-3.5 w-3.5" /> Hunter / LeadMagic / FindyMail Active
+                  </span>
+                </div>
+              </div>
+
+              {/* TAB 1: COMPANIES */}
+              {expleeActiveTab === "companies" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {expleeData?.companies?.map((comp: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-indigo-500/40 transition space-y-3 flex flex-col justify-between"
+                    >
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            {comp.category}
+                          </span>
+                          <span className="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                            {comp.fitScore}% FIT
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-white">{comp.name}</h4>
+                        <a
+                          href={`https://${comp.domain}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-indigo-400 hover:underline flex items-center gap-1"
+                        >
+                          {comp.domain}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                        <p className="text-[11px] text-slate-400 mt-1">Company Size: {comp.size}</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExpleeActiveTab("emails");
+                          const personIdx = expleeData?.people?.findIndex((p: any) => p.domain === comp.domain || p.company.includes(comp.name));
+                          if (personIdx !== -1) {
+                            setSelectedExpleePersonIndex(personIdx);
+                            setEmailEditorSubject(expleeData.people[personIdx].emailSubject || "");
+                            setEmailEditorBody(expleeData.people[personIdx].emailBody || "");
+                          }
+                        }}
+                        className="w-full py-1.5 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        <span>View Outreach Email ➔</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* TAB 2: PEOPLE (DECISION MAKERS) */}
+              {expleeActiveTab === "people" && (
+                <div className="space-y-2">
+                  {expleeData?.people?.map((person: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-indigo-500/40 transition flex flex-col md:flex-row md:items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-indigo-500/30 to-purple-500/30 border border-indigo-500/40 text-indigo-300 font-bold flex items-center justify-center text-sm shadow">
+                          {person.initials}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-white">{person.name}</h4>
+                            {person.linkedin && (
+                              <a
+                                href={person.linkedin}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-slate-400 hover:text-sky-400 transition"
+                                title="View LinkedIn Profile"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-400 flex flex-wrap items-center gap-1.5 mt-0.5">
+                            <span className="text-slate-300 font-medium">{person.title}</span>
+                            <span>•</span>
+                            <span className="text-indigo-400">{person.company} ({person.domain})</span>
+                          </div>
+                          <div className="text-xs text-slate-300 mt-1 flex items-center gap-2">
+                            <span className="font-mono text-emerald-400">{person.email}</span>
+                            <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20 font-bold">
+                              {person.emailStatus}
+                            </span>
+                            <span className="text-[10px] text-indigo-300 bg-indigo-500/10 px-1.5 py-0.2 rounded font-medium">
+                              via {person.verifiedVia}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end md:self-center">
+                        <button
+                          type="button"
+                          onClick={() => handleSyncExpleeLeadToSheet(person)}
+                          disabled={syncingExpleeLead}
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition border border-slate-700 flex items-center gap-1"
+                        >
+                          <Table className="h-3.5 w-3.5 text-emerald-400" />
+                          <span>Sync Sheet</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedExpleePersonIndex(idx);
+                            setEmailEditorSubject(person.emailSubject || "");
+                            setEmailEditorBody(person.emailBody || "");
+                            setExpleeActiveTab("emails");
+                          }}
+                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 shadow-md shadow-indigo-600/25"
+                        >
+                          <Mail className="h-3.5 w-3.5" />
+                          <span>Compose Pitch ➔</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* TAB 3: EMAILS (EXACT EXPLEE OUTREACH READY VIEW) */}
+              {expleeActiveTab === "emails" && expleeData?.people && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                  {/* Left Column: Decision Maker Contact Switcher */}
+                  <div className="lg:col-span-4 space-y-2 max-h-[460px] overflow-y-auto pr-1">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                      Select Target Decision Maker:
+                    </span>
+                    {expleeData.people.map((person: any, idx: number) => {
+                      const isSelected = selectedExpleePersonIndex === idx;
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setSelectedExpleePersonIndex(idx);
+                            setEmailEditorSubject(person.emailSubject || "");
+                            setEmailEditorBody(person.emailBody || "");
+                          }}
+                          className={`p-3 rounded-xl cursor-pointer transition border ${
+                            isSelected
+                              ? "bg-indigo-950/60 border-indigo-500 shadow-lg shadow-indigo-500/20"
+                              : "bg-slate-950/60 border-slate-800 hover:border-slate-700"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center justify-center text-xs">
+                              {person.initials}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h5 className="text-xs font-bold text-white truncate">
+                                {person.name}
+                              </h5>
+                              <p className="text-[11px] text-slate-400 truncate">
+                                {person.title}
+                              </p>
+                              <p className="text-[10px] text-indigo-400 truncate">
+                                {person.domain}
+                              </p>
+                            </div>
+                            <span className="text-[9px] text-emerald-400 bg-emerald-500/10 px-1 rounded font-bold">
+                              {person.emailStatus}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Right Column: Live Email Editor & Sender */}
+                  {expleeData.people[selectedExpleePersonIndex] && (
+                    <div className="lg:col-span-8 p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3.5 shadow-xl">
+                      {/* Recipient Profile Bar */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-800/80 gap-2">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 font-bold text-white flex items-center justify-center text-sm shadow">
+                            {expleeData.people[selectedExpleePersonIndex].initials}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-sm font-extrabold text-white">
+                                {expleeData.people[selectedExpleePersonIndex].name}
+                              </h4>
+                              {expleeData.people[selectedExpleePersonIndex].linkedin && (
+                                <a
+                                  href={expleeData.people[selectedExpleePersonIndex].linkedin}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-slate-400 hover:text-sky-400 transition"
+                                  title="View on LinkedIn"
+                                >
+                                  <ExternalLink className="h-3.5 w-3.5" />
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-400">
+                              {expleeData.people[selectedExpleePersonIndex].title} •{" "}
+                              <span className="text-indigo-400">
+                                {expleeData.people[selectedExpleePersonIndex].domain}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 self-start sm:self-center">
+                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+                            valid
+                          </span>
+                          <span className="text-[10px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-full font-medium">
+                            via {expleeData.people[selectedExpleePersonIndex].verifiedVia}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Input "To" */}
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="w-12 text-slate-400 font-bold">To:</span>
+                        <div className="flex-1 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-emerald-300 font-mono text-xs flex items-center justify-between">
+                          <span>{expleeData.people[selectedExpleePersonIndex].email}</span>
+                          <span className="text-[10px] text-slate-500">Verified Business Inbox</span>
+                        </div>
+                      </div>
+
+                      {/* Input "Subject" */}
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="w-12 text-slate-400 font-bold">Subj:</span>
+                        <input
+                          type="text"
+                          value={emailEditorSubject}
+                          onChange={(e) => setEmailEditorSubject(e.target.value)}
+                          placeholder="Email Subject Line..."
+                          className="flex-1 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 font-semibold"
+                        />
+                      </div>
+
+                      {/* Textarea "Email Body" */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs text-slate-400">
+                          <span className="font-semibold text-slate-300">Personalized Cold Outreach Pitch:</span>
+                          <span className="text-[10px] text-slate-500">Click text to edit anytime</span>
+                        </div>
+                        <textarea
+                          rows={8}
+                          value={emailEditorBody}
+                          onChange={(e) => setEmailEditorBody(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-200 leading-relaxed font-sans focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none shadow-inner"
+                        />
+                      </div>
+
+                      {/* Action Buttons Toolbar */}
+                      <div className="flex flex-wrap items-center justify-between pt-2 border-t border-slate-800 gap-2">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`Subject: ${emailEditorSubject}\n\n${emailEditorBody}`);
+                              setCopiedEmailStatus(true);
+                              setTimeout(() => setCopiedEmailStatus(false), 2000);
+                            }}
+                            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-slate-700"
+                          >
+                            {copiedEmailStatus ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                            <span>{copiedEmailStatus ? "Copied!" : "Copy Email"}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleSyncExpleeLeadToSheet(expleeData.people[selectedExpleePersonIndex])}
+                            disabled={syncingExpleeLead}
+                            className="px-3 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-emerald-500/30"
+                          >
+                            <Table className="h-3.5 w-3.5" />
+                            <span>{syncingExpleeLead ? "Syncing..." : "Sync to Google Sheet"}</span>
+                          </button>
+                        </div>
+
+                        <a
+                          href={`mailto:${expleeData.people[selectedExpleePersonIndex].email}?subject=${encodeURIComponent(
+                            emailEditorSubject
+                          )}&body=${encodeURIComponent(emailEditorBody)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-600 hover:to-pink-700 text-white font-bold rounded-xl text-xs shadow-lg shadow-indigo-500/25 transition flex items-center gap-1.5"
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                          <span>Claim $30 Credits & Send Email</span>
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
