@@ -317,6 +317,50 @@ export default function Dashboard() {
     setTimeout(() => setNotificationToast(null), 4000);
   }
 
+  // 1-Click "Finds High-Ticket Clients While You Sleep" for any discovered business with a website
+  async function handleTriggerClientFinderForLead(lead: Lead) {
+    if (!lead.website) return;
+    const cleanUrl = lead.website.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    setAutopilotUrl(cleanUrl);
+    setAutopilotLoading(true);
+
+    if (typeof window !== "undefined") {
+      const el = document.getElementById("autopilot-agent-engine");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    setNotificationToast({
+      message: `Analyzing ${lead.title}...`,
+      sub: `AI Agent crawling ${cleanUrl} to find their high-ticket clients`,
+    });
+
+    try {
+      const res = await fetch("/api/ai-agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "analyze_website", url: cleanUrl }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAutopilotData(data);
+        logUsageToDatabase(`AI Client Finder: ${lead.title}`, data.icpSegments?.length || 0);
+        setNotificationToast({
+          message: `Generated High-Ticket Clients for ${lead.title}!`,
+          sub: `Found ${data.icpSegments?.length || 4} high-fit buyer segments.`,
+        });
+        setTimeout(() => setNotificationToast(null), 5000);
+      }
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setAutopilotLoading(false);
+    }
+  }
+
   async function handleTriggerAutopilotNow() {
     setRunningAutopilotCycle(true);
     logUsageToDatabase("Autopilot Cloud Cycle Triggered", 1);
@@ -967,7 +1011,7 @@ export default function Dashboard() {
       {/* Main Container */}
       <main className={`flex-1 max-w-7xl w-full mx-auto p-6 space-y-6 transition duration-300 ${!user ? "filter blur-md pointer-events-none select-none opacity-40" : ""}`}>
         {/* Explee-Style 24/7 Autonomous AI Agent Banner */}
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 shadow-2xl space-y-5 relative overflow-hidden">
+        <div id="autopilot-agent-engine" className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 shadow-2xl space-y-5 relative overflow-hidden scroll-mt-20">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
@@ -1432,27 +1476,41 @@ export default function Dashboard() {
                         </td>
 
                         <td className="py-3 px-4">
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
                             {hasWebsite ? (
-                              <div className="flex items-center gap-2">
-                                <a
-                                  href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-amber-400 hover:underline flex items-center gap-1 line-clamp-1 max-w-[150px]"
-                                >
-                                  <Globe className="h-3 w-3 shrink-0" />
-                                  <span className="truncate">{lead.website.replace(/^https?:\/\//, "")}</span>
-                                </a>
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                  <a
+                                    href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-amber-400 hover:underline flex items-center gap-1 line-clamp-1 max-w-[150px]"
+                                  >
+                                    <Globe className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">{lead.website.replace(/^https?:\/\//, "")}</span>
+                                  </a>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      runWebsiteAudit(lead);
+                                    }}
+                                    className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                                  >
+                                    Audit
+                                  </button>
+                                </div>
                                 <button
+                                  type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    runWebsiteAudit(lead);
+                                    handleTriggerClientFinderForLead(lead);
                                   }}
-                                  className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                                  className="w-fit flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 transition shadow-sm group/btn"
+                                  title="Finds High-Ticket Clients While You Sleep - Auto-Run AI for this business"
                                 >
-                                  Audit
+                                  <Sparkles className="h-2.5 w-2.5 text-indigo-400 group-hover/btn:rotate-12 transition" />
+                                  <span>Find Clients While You Sleep</span>
                                 </button>
                               </div>
                             ) : (
@@ -1626,13 +1684,39 @@ export default function Dashboard() {
               </div>
 
               {detailedLead.website && (
-                <div className="pt-1">
+                <div className="pt-1 space-y-2">
                   <button
                     onClick={() => runWebsiteAudit(detailedLead)}
                     className="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-lg text-slate-200 transition"
                   >
                     Run Speed & SEO Diagnostic
                   </button>
+
+                  <div className="p-3 bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-slate-950 rounded-xl border border-indigo-500/40 space-y-2 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-indigo-300 flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+                        Finds High-Ticket Clients While You Sleep
+                      </span>
+                      <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30 font-bold">
+                        Explee-Style AI Agent
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-snug">
+                      Auto-set <span className="text-white font-semibold">{detailedLead.website}</span> into the AI Agent. Crawls what they sell and calculates who their ideal high-ticket clients are with Fit Scores.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDetailedLead(null);
+                        handleTriggerClientFinderForLead(detailedLead);
+                      }}
+                      className="w-full py-2 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-600 hover:to-pink-700 text-white font-bold rounded-lg text-xs shadow-md shadow-indigo-500/25 transition flex items-center justify-center gap-2"
+                    >
+                      <Zap className="h-3.5 w-3.5" />
+                      <span>Auto-Set Website & Hunt High-Ticket Clients ➔</span>
+                    </button>
+                  </div>
                 </div>
               )}
 
