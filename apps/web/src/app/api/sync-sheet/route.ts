@@ -6,34 +6,29 @@ const GOOGLE_SHEET_WEBHOOK_URL =
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const leads = Array.isArray(body) ? body : body.leads || [body];
 
-    if (!leads.length) {
-      return NextResponse.json({ success: false, error: "No leads provided" }, { status: 400 });
-    }
+    // If body has an action (register_user, login_user, log_usage, sync_leads)
+    const payload = body.action ? body : { action: "sync_leads", leads: Array.isArray(body) ? body : body.leads || [body] };
 
-    // Forward to the Google Apps Script webhook
     const response = await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(leads),
+      body: JSON.stringify(payload),
     });
 
     const result = await response.json();
     return NextResponse.json({
       success: true,
-      message: `Successfully synced ${leads.length} leads to Google Sheet`,
       result,
-      sheetUrl: "https://docs.google.com/spreadsheets/d/1ic6sIvjHQq6pDEKIwfgqLJszWcboi_UNqDXK1cbo8P0/edit?gid=0#gid=0",
     });
   } catch (error: any) {
-    console.error("Sheet sync error:", error);
+    console.error("Sheet API sync error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to sync to Google Sheet",
+        error: error.message || "Failed to sync to database",
       },
       { status: 500 }
     );
