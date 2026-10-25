@@ -99,6 +99,7 @@ async function hashPassword(message: string): Promise<string> {
 }
 
 const OWNER_EMAIL = "fagun115946@gmail.com";
+const GOOGLE_CLIENT_ID = "440682279886-n3aos7op10l8nl145omsnqqbcou5mujc.apps.googleusercontent.com";
 const PRIVATE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1ic6sIvjHQq6pDEKIwfgqLJszWcboi_UNqDXK1cbo8P0/edit?gid=0#gid=0";
 
 const POPULAR_NICHES = [
@@ -232,18 +233,14 @@ export default function Dashboard() {
     const savedUser = localStorage.getItem("maplead_user");
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {}
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        fetchLeads(true);
+      } catch (e) {
+        setUser(null);
+      }
     } else {
-      // Default to owner user for live demonstration
-      const defaultUser: UserProfile = {
-        name: "Mejbaur Bahar Fagun",
-        email: OWNER_EMAIL,
-        plan: "Enterprise Master ($149/mo)",
-        isGoogleVerified: true,
-      };
-      setUser(defaultUser);
-      localStorage.setItem("maplead_user", JSON.stringify(defaultUser));
+      setUser(null);
     }
 
     // Load saved leads
@@ -264,8 +261,6 @@ export default function Dashboard() {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-
-    fetchLeads(true);
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -533,6 +528,7 @@ export default function Dashboard() {
         setUser(newUser);
         localStorage.setItem("maplead_user", JSON.stringify(newUser));
         setShowAuthModal(false);
+        fetchLeads(true);
 
         setNotificationToast({
           message: `Welcome, ${newUser.name}!`,
@@ -574,6 +570,7 @@ export default function Dashboard() {
         setUser(loggedUser);
         localStorage.setItem("maplead_user", JSON.stringify(loggedUser));
         setShowAuthModal(false);
+        fetchLeads(true);
 
         setNotificationToast({
           message: `Signed in as ${loggedUser.email}`,
@@ -588,54 +585,99 @@ export default function Dashboard() {
     }
   }
 
-  // Google OAuth 2.0 Sign-In Handler with Sheet 2 Sync
+  // Google OAuth 2.0 Sign-In Handler with Google Account Chooser & Sheet 2 Sync
   async function handleGoogleLogin() {
     setAuthLoading(true);
+    setAuthError("");
+
+    if (typeof window === "undefined" || !(window as any).google?.accounts?.oauth2) {
+      setAuthError("Connecting to Google Identity Services... Please click again in 2 seconds.");
+      setAuthLoading(false);
+      return;
+    }
+
     try {
-      const googleUser: UserProfile = {
-        name: "Mejbaur Bahar Fagun",
-        email: OWNER_EMAIL,
-        plan: "Enterprise Master ($149/mo)",
-        isGoogleVerified: true,
-      };
+      const client = (window as any).google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email openid",
+        prompt: "select_account",
+        callback: async (tokenResponse: any) => {
+          if (tokenResponse.error) {
+            setAuthError(tokenResponse.error_description || "Google authorization was cancelled.");
+            setAuthLoading(false);
+            return;
+          }
 
-      // Record in Sheet 2 (Users_Auth)
-      await fetch("/api/sync-sheet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "login_user",
-          email: OWNER_EMAIL,
-          name: googleUser.name,
-          passwordHash: "[SECURE_GOOGLE_OAUTH_TOKEN]",
-          authMethod: "Google OAuth 2.0",
-          plan: googleUser.plan,
-          status: "Active Verified",
-        }),
+          try {
+            // Fetch verified user profile directly from Google UserInfo endpoint
+            const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+              headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+            });
+            const profile = await userInfoRes.json();
+            const email = (profile.email || "").toLowerCase().trim();
+            const name = profile.name || email.split("@")[0] || "Client";
+            const plan = email === OWNER_EMAIL ? "Enterprise Master ($149/mo)" : "Starter Plan ($29/mo)";
+
+            // Record in Sheet 2 (Users_Auth)
+            await fetch("/api/sync-sheet", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "login_user",
+                email,
+                name,
+                passwordHash: `[GOOGLE_OAUTH_TOKEN_${profile.sub || "VERIFIED"}]`,
+                authMethod: "Google OAuth 2.0 (Verified)",
+                plan,
+                status: "Active Verified",
+              }),
+            });
+
+            const googleUser: UserProfile = {
+              name,
+              email,
+              plan,
+              isGoogleVerified: true,
+            };
+
+            setUser(googleUser);
+            localStorage.setItem("maplead_user", JSON.stringify(googleUser));
+            setShowAuthModal(false);
+
+            // Log activity to Sheet 3
+            logUsageToDatabase("Google OAuth Login", 0);
+
+            // Load initial leads
+            fetchLeads(true);
+
+            setNotificationToast({
+              message: `Welcome, ${name}!`,
+              sub: `Authenticated via Google (${email})`,
+            });
+            setTimeout(() => setNotificationToast(null), 5000);
+          } catch (e: any) {
+            setAuthError("Failed to authenticate Google account: " + e.message);
+          } finally {
+            setAuthLoading(false);
+          }
+        },
       });
 
-      setUser(googleUser);
-      localStorage.setItem("maplead_user", JSON.stringify(googleUser));
-      setShowAuthModal(false);
-
-      setNotificationToast({
-        message: "Signed in with Google",
-        sub: `Authenticated as ${OWNER_EMAIL}`,
-      });
-      setTimeout(() => setNotificationToast(null), 5000);
-    } catch (e) {
-      console.error(e);
-    } finally {
+      // Forces Google Account Selection Picker Popup
+      client.requestAccessToken({ prompt: "select_account" });
+    } catch (err: any) {
+      setAuthError(err.message || "Failed to initialize Google Sign-In");
       setAuthLoading(false);
     }
   }
 
   function handleLogout() {
     setUser(null);
+    setLeads([]);
     localStorage.removeItem("maplead_user");
     setNotificationToast({
-      message: "Logged out successfully",
-      sub: "Please sign in to access premium features.",
+      message: "Signed out",
+      sub: "Access gate locked. Please log in to proceed.",
     });
     setTimeout(() => setNotificationToast(null), 4000);
   }
@@ -751,10 +793,10 @@ export default function Dashboard() {
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-600/40 shadow-sm transition"
-              title="Admin Master Database (Sheet 1: Leads | Sheet 2: Users & Encrypted Passwords | Sheet 3: Usage Analytics)"
+              title="Owner Workspace Database"
             >
               <Table className="h-3.5 w-3.5 text-emerald-400" />
-              <span className="hidden sm:inline">Admin Database</span>
+              <span className="hidden sm:inline">Executive Dashboard</span>
               <ExternalLink className="h-3 w-3 opacity-70" />
             </a>
           )}
@@ -812,7 +854,7 @@ export default function Dashboard() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+      <main className={`flex-1 max-w-7xl w-full mx-auto p-6 space-y-6 transition duration-300 ${!user ? "filter blur-md pointer-events-none select-none opacity-40" : ""}`}>
         {/* Search Hero Box */}
         <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-900/60 border border-slate-800 shadow-xl space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
@@ -1550,29 +1592,38 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Authentication Modal */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
-            <button
-              onClick={() => {
-                setShowAuthModal(false);
-                setAuthError("");
-              }}
-              className="absolute right-4 top-4 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800 text-xs"
-            >
-              ✕
-            </button>
+      {/* Strict Authentication Wall / Gate (when !user, uncloseable) */}
+      {(!user || showAuthModal) && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-xl z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-7 space-y-5 shadow-2xl relative border-amber-500/20">
+            {/* Show close button ONLY if user is already authenticated */}
+            {user && (
+              <button
+                onClick={() => {
+                  setShowAuthModal(false);
+                  setAuthError("");
+                }}
+                className="absolute right-4 top-4 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800 text-xs"
+              >
+                ✕
+              </button>
+            )}
 
-            <div className="text-center space-y-1">
-              <div className="h-12 w-12 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center mx-auto shadow-lg shadow-orange-500/25">
+            <div className="text-center space-y-1.5">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-rose-600 flex items-center justify-center mx-auto shadow-lg shadow-orange-500/30">
                 <Flame className="h-7 w-7 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-white">
-                {authMode === "SIGNUP" ? "Start Your MapLead Subscription" : "Sign In to MapLead Pro"}
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <Shield className="h-3 w-3" />
+                {!user ? "Enterprise Access Required" : "Account Access"}
+              </div>
+              <h3 className="text-xl font-extrabold text-white">
+                {authMode === "SIGNUP" ? "Create Client Account" : "Sign In to MapLead Pro"}
               </h3>
               <p className="text-xs text-slate-400">
-                Access verified B2B contacts, technical audits, and personalized sales scripts.
+                {!user
+                  ? "Please sign in or create an account to access verified leads, direct phones, emails, and market diagnostics."
+                  : "Access your saved searches and prospecting pipeline."}
               </p>
             </div>
 
@@ -1587,15 +1638,15 @@ export default function Dashboard() {
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={authLoading}
-                className="w-full py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-md disabled:opacity-50"
+                className="w-full py-3 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
               >
                 <GoogleIcon className="h-4 w-4" />
                 <span>Continue with Google</span>
               </button>
 
-              <div className="flex items-center gap-2 text-slate-600 text-[11px] my-2">
+              <div className="flex items-center gap-2 text-slate-600 text-[10px] uppercase font-bold tracking-wider my-2">
                 <div className="flex-1 border-t border-slate-800" />
-                <span>OR SIGN IN WITH WORK EMAIL</span>
+                <span>Or Continue With Work Email</span>
                 <div className="flex-1 border-t border-slate-800" />
               </div>
             </div>
@@ -1610,7 +1661,7 @@ export default function Dashboard() {
                     value={authName}
                     onChange={(e) => setAuthName(e.target.value)}
                     placeholder="e.g. David Vance"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
                   />
                 </div>
               )}
@@ -1623,7 +1674,7 @@ export default function Dashboard() {
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
                   placeholder="name@agency.com"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
                 />
               </div>
 
@@ -1635,46 +1686,50 @@ export default function Dashboard() {
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={authLoading}
-                className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-xl text-xs shadow-lg shadow-orange-500/25 transition mt-2 disabled:opacity-50"
+                className="w-full py-3 bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold rounded-xl text-xs shadow-lg shadow-orange-500/25 transition mt-2 disabled:opacity-50"
               >
-                {authLoading ? "Processing..." : authMode === "SIGNUP" ? "Create Account & Select Plan" : "Sign In"}
+                {authLoading ? "Authenticating..." : authMode === "SIGNUP" ? "Create Account & Activate" : "Sign In to Platform"}
               </button>
             </form>
 
-            <div className="text-center text-xs text-slate-400 pt-2 border-t border-slate-800">
+            <div className="flex items-center justify-between text-xs text-slate-400 pt-3 border-t border-slate-800">
+              <div className="flex items-center gap-1.5 text-[11px] text-emerald-400">
+                <Lock className="h-3 w-3" />
+                <span>SHA-256 Encrypted</span>
+              </div>
               {authMode === "SIGNUP" ? (
-                <>
+                <div>
                   Already registered?{" "}
                   <button
                     onClick={() => {
                       setAuthMode("LOGIN");
                       setAuthError("");
                     }}
-                    className="text-amber-400 hover:underline font-semibold"
+                    className="text-amber-400 hover:underline font-bold"
                   >
                     Sign In
                   </button>
-                </>
+                </div>
               ) : (
-                <>
-                  Need an agency account?{" "}
+                <div>
+                  New client?{" "}
                   <button
                     onClick={() => {
                       setAuthMode("SIGNUP");
                       setAuthError("");
                     }}
-                    className="text-amber-400 hover:underline font-semibold"
+                    className="text-amber-400 hover:underline font-bold"
                   >
-                    Get Started Free
+                    Create Account
                   </button>
-                </>
+                </div>
               )}
             </div>
           </div>

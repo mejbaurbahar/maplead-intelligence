@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MapLead Intelligence - B2B Lead Generation & Opportunity Scanner",
-  description: "Turn Google Maps business data into qualified paying client opportunities. 100% Free local engine.",
+  title: "MapLead Pro — Enterprise B2B Lead Intelligence & Prospecting Platform",
+  description: "Verified local business intelligence, contact discovery, technical audits, and high-ticket B2B pipeline acceleration.",
 };
 
 export default function RootLayout({
@@ -24,6 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <head>
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+      </head>
       <body className="min-h-full flex flex-col bg-slate-950 text-slate-100">{children}</body>
     </html>
   );
