@@ -226,7 +226,118 @@ export default function Dashboard() {
   const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
   const [auditLoading, setAuditLoading] = useState(false);
 
+  // 24/7 Autopilot AI Agent State (Explee-Style Autonomous Engine)
+  const [autopilotUrl, setAutopilotUrl] = useState("mygrowthagency.com");
+  const [autopilotLoading, setAutopilotLoading] = useState(false);
+  const [autopilotData, setAutopilotData] = useState<any>({
+    title: "Apex Growth & Web Studio",
+    description: "High-performance websites and local SEO lead generation for high-ticket local businesses.",
+    identifiedOffer: "B2B Digital Growth, Web Design & Local Maps SEO",
+    icpSegments: [
+      {
+        title: "Dentists & Cosmetic Orthodontists",
+        category: "Healthcare & Aesthetics",
+        fitScore: 96,
+        reason: "High patient LTV ($2,000+). Many have outdated websites or lack local Google Maps SEO ranking.",
+        estDeal: "$1,500 - $3,500",
+        recommendedQuery: "Dentists & Orthodontists",
+        targetCities: ["London, UK", "New York, USA", "Austin, TX"],
+      },
+      {
+        title: "Roofing & Home Service Contractors",
+        category: "Home Infrastructure",
+        fitScore: 92,
+        reason: "Emergency inquiries occur via mobile Google search. Missing mobile responsiveness causes 40%+ dropoff.",
+        estDeal: "$1,200 - $2,500",
+        recommendedQuery: "Roofing Contractors",
+        targetCities: ["Houston, TX", "Manchester, UK", "Dallas, TX"],
+      },
+      {
+        title: "Commercial Office Cleaning Providers",
+        category: "B2B Facilities",
+        fitScore: 88,
+        reason: "High recurring contract value. Often rely on word-of-mouth with no web presence.",
+        estDeal: "$800 - $1,800/mo",
+        recommendedQuery: "Commercial Cleaning",
+        targetCities: ["Toronto, Canada", "Chicago, IL", "London, UK"],
+      },
+      {
+        title: "Specialty Cafes & Fine Dining Restaurants",
+        category: "Food & Beverage",
+        fitScore: 84,
+        reason: "Requires mobile digital menu, online table reservations, and high review velocity.",
+        estDeal: "$600 - $1,200",
+        recommendedQuery: "Coffee Shops & Cafes",
+        targetCities: ["Dhaka, Bangladesh", "Dubai, UAE", "Melbourne, Australia"],
+      },
+    ],
+  });
+  const [showAutopilotSection, setShowAutopilotSection] = useState(true);
+  const [runningAutopilotCycle, setRunningAutopilotCycle] = useState(false);
+
   const isOwner = user?.email?.toLowerCase().trim() === OWNER_EMAIL;
+
+  async function handleRunAutopilotAnalysis(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (!autopilotUrl.trim()) return;
+    setAutopilotLoading(true);
+
+    try {
+      const res = await fetch("/api/ai-agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "analyze_website", url: autopilotUrl.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAutopilotData(data);
+        logUsageToDatabase("AI Agent ICP Analysis", data.icpSegments?.length || 0);
+        setNotificationToast({
+          message: "AI Offer Analysis Complete!",
+          sub: `Generated ${data.icpSegments?.length} high-fit buyer segments.`,
+        });
+        setTimeout(() => setNotificationToast(null), 5000);
+      }
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setAutopilotLoading(false);
+    }
+  }
+
+  async function handleDeployIcpSegment(segment: any) {
+    setKeyword(segment.recommendedQuery);
+    if (segment.targetCities && segment.targetCities.length > 0) {
+      setCity(segment.targetCities[0]);
+    }
+    setNotificationToast({
+      message: `Deployed Agent to "${segment.title}"`,
+      sub: `Target location: ${segment.targetCities?.[0] || city}`,
+    });
+    setTimeout(() => setNotificationToast(null), 4000);
+  }
+
+  async function handleTriggerAutopilotNow() {
+    setRunningAutopilotCycle(true);
+    logUsageToDatabase("Autopilot Cloud Cycle Triggered", 1);
+    try {
+      const segment = autopilotData?.icpSegments?.[0];
+      if (segment) {
+        setKeyword(segment.recommendedQuery);
+        setCity(segment.targetCities?.[0] || "London, UK");
+      }
+      await handleStartScrape();
+      setNotificationToast({
+        message: "24/7 Autopilot Cycle Executed!",
+        sub: "Discovered new prospects & synced to Google Sheet.",
+      });
+      setTimeout(() => setNotificationToast(null), 5000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRunningAutopilotCycle(false);
+    }
+  }
 
   useEffect(() => {
     // Check saved session user
@@ -855,6 +966,114 @@ export default function Dashboard() {
 
       {/* Main Container */}
       <main className={`flex-1 max-w-7xl w-full mx-auto p-6 space-y-6 transition duration-300 ${!user ? "filter blur-md pointer-events-none select-none opacity-40" : ""}`}>
+        {/* Explee-Style 24/7 Autonomous AI Agent Banner */}
+        <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 shadow-2xl space-y-5 relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1.5 shadow">
+                  <Sparkles className="h-3 w-3 text-indigo-400" />
+                  24/7 Autonomous AI Agent
+                </span>
+                <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Cloud Runner: ACTIVE (GitHub Actions)
+                </span>
+              </div>
+              <h2 className="text-xl font-black text-white tracking-tight">
+                Finds High-Ticket Clients While You Sleep
+              </h2>
+              <p className="text-xs text-slate-400 max-w-2xl">
+                Paste your website or service offer below. Our AI Agent analyzes what you sell, calculates Ideal Customer Profile (ICP) fit scores, and autonomously hunts decision-makers on Google Maps.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleTriggerAutopilotNow}
+                disabled={runningAutopilotCycle}
+                className="px-4 py-2.5 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-600 hover:from-indigo-600 hover:to-pink-700 text-white font-bold rounded-xl text-xs shadow-lg shadow-indigo-500/25 transition flex items-center gap-2 disabled:opacity-50"
+              >
+                <Zap className="h-4 w-4" />
+                {runningAutopilotCycle ? "Running Autopilot Cycle..." : "Run Autopilot Cycle Now"}
+              </button>
+            </div>
+          </div>
+
+          {/* Step 1: Input URL / Offer */}
+          <form onSubmit={handleRunAutopilotAnalysis} className="flex flex-col sm:flex-row gap-2">
+            <div className="flex-1 relative">
+              <Globe className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                value={autopilotUrl}
+                onChange={(e) => setAutopilotUrl(e.target.value)}
+                placeholder="Paste your website (e.g. myagency.com) or service..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={autopilotLoading}
+              className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold rounded-xl text-xs transition border border-slate-700 flex items-center justify-center gap-2 shadow"
+            >
+              {autopilotLoading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 text-indigo-400" />}
+              {autopilotLoading ? "Analyzing..." : "Analyze Offer & Generate ICP"}
+            </button>
+          </form>
+
+          {/* Step 2: Matched ICP Segments with Fit Scores */}
+          {autopilotData && autopilotData.icpSegments && (
+            <div className="space-y-3 pt-2 border-t border-slate-800/80">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-slate-300 flex items-center gap-1.5">
+                  <Flame className="h-3.5 w-3.5 text-orange-400" />
+                  Target Buyer Segments (Fit Score Algorithm)
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Identified Offer: <span className="text-indigo-300 font-semibold">{autopilotData.identifiedOffer}</span>
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                {autopilotData.icpSegments.map((segment: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/90 hover:border-indigo-500/40 transition space-y-2 group flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                          {segment.category}
+                        </span>
+                        <span className="text-xs font-black text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                          {segment.fitScore}% FIT
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-bold text-white group-hover:text-indigo-300 transition mt-1">
+                        {segment.title}
+                      </h4>
+                      <p className="text-[11px] text-slate-400 leading-snug mt-1">{segment.reason}</p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-900 flex items-center justify-between">
+                      <span className="text-[10px] text-amber-400 font-bold">Deal: {segment.estDeal}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeployIcpSegment(segment)}
+                        className="px-2.5 py-1 bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white rounded-lg text-[10px] font-bold border border-indigo-500/30 transition flex items-center gap-1"
+                      >
+                        Deploy Agent ➔
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Search Hero Box */}
         <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-900/60 border border-slate-800 shadow-xl space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">

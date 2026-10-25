@@ -1,0 +1,25 @@
+name: 24/7 Autopilot B2B Prospecting Agent
+
+on:
+  schedule:
+    # Runs twice daily at 00:00 and 12:00 UTC (100% free GitHub-hosted runner)
+    - cron: '0 0,12 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI anytime
+
+jobs:
+  prospect:
+    name: Run Autonomous Lead Prospector
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Execute 24/7 Autopilot Agent
+        env:
+          GOOGLE_SHEET_WEBHOOK_URL: ${{ secrets.GOOGLE_SHEET_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycbxHOiNqRFOC_pMeS-6DHkDuilPGISk9cJfcG6Ts3lK9q3hOeRmWohyeDgam7PAIbdml5g/exec' }}
+        run: node scripts/autopilot-agent.mjs
