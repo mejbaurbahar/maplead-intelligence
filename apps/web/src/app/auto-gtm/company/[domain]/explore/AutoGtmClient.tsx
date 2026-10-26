@@ -41,10 +41,17 @@ import {
   CheckCheck,
   Clock,
   Radio,
+  Download,
+  User,
+  LogOut,
+  Building,
 } from 'lucide-react';
 
 const GOOGLE_SHEET_DIRECT_WEBHOOK =
   'https://script.google.com/macros/s/AKfycbxHOiNqRFOC_pMeS-6DHkDuilPGISk9cJfcG6Ts3lK9q3hOeRmWohyeDgam7PAIbdml5g/exec';
+
+const GOOGLE_CLIENT_ID =
+  '440682279886-n3aos7op10l8nl145omsnqqbcou5mujc.apps.googleusercontent.com';
 
 function LinkedInIcon({ className }: { className?: string }) {
   return (
@@ -67,6 +74,29 @@ function LinkedInIcon({ className }: { className?: string }) {
   );
 }
 
+function GoogleIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24">
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      />
+    </svg>
+  );
+}
+
 // 9 Standard GTM Steps
 const GTM_STEPS = [
   { id: 1, name: 'Recon & Intake', short: '1. Recon', desc: 'Domain analysis & tech stack extraction' },
@@ -80,51 +110,92 @@ const GTM_STEPS = [
   { id: 9, name: 'Inbox & CRM Sync', short: '9. Sync', desc: 'AI reply triage & Google Sheet automated sync' },
 ];
 
-// Mock Google Maps Lead Discovery
-const MOCK_MAPS_BUSINESSES = [
-  {
-    name: 'Apex Aviation Systems & Charter',
-    domain: 'apexaviation.co.uk',
-    rating: 4.9,
-    reviews: 142,
-    location: 'London Heathrow, UK',
-    phone: '+44 20 7946 0831',
-    category: 'Commercial Aviation & Training',
-    monthlyVisitors: '185K',
-  },
-  {
-    name: 'Skymesh Tech Logistics Group',
-    domain: 'skymeshlogistics.com',
-    rating: 4.8,
-    reviews: 215,
-    location: 'Austin, TX, USA',
-    phone: '+1 512 555 0192',
-    category: 'Air Freight & Cargo Logistics',
-    monthlyVisitors: '420K',
-  },
-  {
-    name: 'Consolto Remote Video Suite',
-    domain: 'consolto.com',
-    rating: 4.7,
-    reviews: 388,
-    location: 'San Francisco, CA, USA',
-    phone: '+1 415 555 2671',
-    category: 'B2B Video Conferencing & Booking',
-    monthlyVisitors: '680K',
-  },
-  {
-    name: 'Global Flight Deck Intelligence',
-    domain: 'globalflightdeck.com',
-    rating: 4.9,
-    reviews: 94,
-    location: 'Frankfurt, Germany',
-    phone: '+49 69 950 1200',
-    category: 'Aviation Safety Software',
-    monthlyVisitors: '95K',
-  },
+const POPULAR_NICHES = [
+  'Aviation Software',
+  'Dentists & Orthodontists',
+  'Roofing Contractors',
+  'HVAC & Cooling',
+  'Commercial Real Estate',
+  'B2B SaaS Startups',
+  'Corporate Law Firms',
+  'Fintech Infrastructure',
 ];
 
-export default function AutoGtmClient({ domain }: { domain: string }) {
+const POPULAR_CITIES = [
+  'London, UK',
+  'Austin, TX',
+  'New York, NY',
+  'San Francisco, CA',
+  'Toronto, Canada',
+  'Dubai, UAE',
+  'Sydney, Australia',
+  'Frankfurt, Germany',
+];
+
+// Helper to generate dynamic Google Maps leads
+function generateMockMapsLeads(keyword: string, location: string) {
+  const kw = (keyword || 'Aviation Software').trim();
+  const loc = (location || 'London, UK').trim();
+  const city = loc.split(',')[0].trim();
+  const slug = kw.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  return [
+    {
+      id: `map_1_${slug}`,
+      name: `${city} Premier ${kw} Group`,
+      domain: `${slug}-${city.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`,
+      rating: 4.9,
+      reviews: 284,
+      location: `Financial District, ${loc}`,
+      phone: '+44 20 7946 0912',
+      category: `${kw} Solutions`,
+      monthlyVisitors: '340K',
+      oppScore: 96,
+      hasWebsite: true,
+    },
+    {
+      id: `map_2_${slug}`,
+      name: `Apex ${kw} & Systems Ltd`,
+      domain: `apex-${slug}.co.uk`,
+      rating: 4.8,
+      reviews: 195,
+      location: `Innovation Hub, ${loc}`,
+      phone: '+44 20 7946 0541',
+      category: `Enterprise ${kw}`,
+      monthlyVisitors: '185K',
+      oppScore: 92,
+      hasWebsite: true,
+    },
+    {
+      id: `map_3_${slug}`,
+      name: `Global Horizon ${kw} Tech`,
+      domain: `global-${slug}.io`,
+      rating: 4.7,
+      reviews: 412,
+      location: `Midtown Boulevard, ${loc}`,
+      phone: '+44 20 7946 0184',
+      category: `Consulting & ${kw}`,
+      monthlyVisitors: '520K',
+      oppScore: 98,
+      hasWebsite: true,
+    },
+    {
+      id: `map_4_${slug}`,
+      name: `The Executive ${kw} Hub`,
+      domain: `executive-${slug}.com`,
+      rating: 4.9,
+      reviews: 156,
+      location: `Tech Corridor, ${loc}`,
+      phone: '+44 20 7946 0772',
+      category: `High-Ticket ${kw}`,
+      monthlyVisitors: '95K',
+      oppScore: 94,
+      hasWebsite: true,
+    },
+  ];
+}
+
+export default function AutoGtmClient({ domain }: { domain?: string }) {
   const initialDomain = (domain || 'nasa.gov').toLowerCase();
 
   // Active step in the 9-step pipeline (1 to 9)
@@ -136,9 +207,11 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
 
   // Search mode: 'domain' or 'maps'
   const [inputMode, setInputMode] = useState<'domain' | 'maps'>('domain');
-  const [mapsKeyword, setMapsKeyword] = useState('Aviation Software & Safety');
+  const [mapsKeyword, setMapsKeyword] = useState('Aviation Software');
   const [mapsLocation, setMapsLocation] = useState('London, UK');
-  const [discoveredMapsLeads, setDiscoveredMapsLeads] = useState(MOCK_MAPS_BUSINESSES);
+  const [discoveredMapsLeads, setDiscoveredMapsLeads] = useState(() =>
+    generateMockMapsLeads('Aviation Software', 'London, UK')
+  );
   const [isSearchingMaps, setIsSearchingMaps] = useState(false);
 
   // Sub-tab selection for Step 5 & 6
@@ -150,14 +223,16 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
 
   // Modals & Sheet Sync State
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [userAuthEmail, setUserAuthEmail] = useState<string>('fagun115946@gmail.com');
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
   const [trialEmail, setTrialEmail] = useState('');
   const [trialStatus, setTrialStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
   const [isCopied, setIsCopied] = useState(false);
-  const [sheetSyncStatus, setSheetSyncStatus] = useState<'synced' | 'syncing' | 'idle'>('synced');
   const [syncHistory, setSyncHistory] = useState<Array<{ time: string; event: string; target: string }>>([
-    { time: '09:15 AM', event: 'Domain Recon Completed', target: 'nasa.gov' },
-    { time: '09:16 AM', event: '17 Decision Makers Verified', target: '4 Waterfall Providers' },
-    { time: '09:18 AM', event: 'Google Sheet Auto-Sync Active', target: 'Tab: GTM_Leads' },
+    { time: '09:20 AM', event: 'Domain Recon Completed', target: 'nasa.gov' },
+    { time: '09:22 AM', event: '17 Decision Makers Verified', target: '4 Waterfall Providers' },
+    { time: '09:25 AM', event: 'Google Sheet Auto-Sync Active', target: 'Tab: GTM_Leads' },
   ]);
 
   // Testimonials Carousel
@@ -674,16 +749,54 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
     ]);
   };
 
+  // Handler: Search Google Maps
+  const handleSearchMaps = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsSearchingMaps(true);
+    setTimeout(() => {
+      const generated = generateMockMapsLeads(mapsKeyword, mapsLocation);
+      setDiscoveredMapsLeads(generated);
+      setIsSearchingMaps(false);
+      setSyncHistory((prev) => [
+        {
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          event: `Maps Discovered ${generated.length} Leads`,
+          target: `${mapsKeyword} in ${mapsLocation}`,
+        },
+        ...prev,
+      ]);
+    }, 400);
+  };
+
   // Handler: Maps lead selection
-  const handleSelectMapsLead = (lead: typeof MOCK_MAPS_BUSINESSES[0]) => {
+  const handleSelectMapsLead = (lead: typeof discoveredMapsLeads[0]) => {
     setCustomDomainInput(lead.domain);
     setTargetDomain(lead.domain);
-    setInputMode('domain');
     setCurrentStep(1);
     setSyncHistory((prev) => [
       { time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), event: 'Imported from Maps Lead Radar', target: lead.domain },
       ...prev,
     ]);
+  };
+
+  // Handler: Export CSV
+  const handleExportCsv = () => {
+    const csvContent =
+      'data:text/csv;charset=utf-8,' +
+      'Name,Title,Company,Email,Status,Deliverability,LinkedIn\n' +
+      prospects
+        .map(
+          (p) =>
+            `"${p.name}","${p.title}","${p.company}","${p.email || 'N/A'}","${p.status}","${p.deliverability}","${p.linkedin}"`
+        )
+        .join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `${targetDomain}_17_decision_makers.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   // Handler: Claim Trial & Log to Google Sheet
@@ -720,13 +833,9 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
   return (
     <div className="min-h-screen bg-[#070B12] text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950 flex flex-col">
       {/* ── TOP NAV BAR ──────────────────────────────────────────────── */}
-      <header className="border-b border-white/[0.08] bg-[#0A0F1A]/80 backdrop-blur-md sticky top-0 z-40 px-4 py-3 flex items-center justify-between gap-4">
+      <header className="border-b border-white/[0.08] bg-[#0A0F1A]/90 backdrop-blur-md sticky top-0 z-40 px-4 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2 group transition-opacity hover:opacity-90"
-            title="Return to Main Radar"
-          >
+          <div className="flex items-center gap-2 group cursor-pointer" onClick={() => setCurrentStep(1)}>
             <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-emerald-500/20">
               M
             </div>
@@ -734,19 +843,19 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
               <div className="font-semibold text-sm tracking-tight flex items-center gap-1.5 text-white">
                 MapLead <span className="text-emerald-400">Autonomous GTM</span>
                 <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  v3.4
+                  All-In-One Engine
                 </span>
               </div>
               <div className="text-[11px] text-slate-400 hidden sm:block">
-                Autonomous B2B Lead Intelligence & Multi-Channel Engine
+                Target Intelligence &bull; Google Maps Radar &bull; Waterfall Enrichment &bull; Google Sheet Sync
               </div>
             </div>
-          </Link>
+          </div>
         </div>
 
         {/* Center: Intake Mode Switcher & Input */}
         <div className="flex items-center gap-2 max-w-xl w-full">
-          <div className="flex bg-slate-900/90 p-1 rounded-xl border border-white/10 text-xs font-medium">
+          <div className="flex bg-slate-900/90 p-1 rounded-xl border border-white/10 text-xs font-medium shrink-0">
             <button
               onClick={() => setInputMode('domain')}
               className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
@@ -754,7 +863,7 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
               }`}
             >
               <Globe className="w-3.5 h-3.5" />
-              Direct Domain
+              Direct Target
             </button>
             <button
               onClick={() => setInputMode('maps')}
@@ -775,7 +884,7 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
                 value={customDomainInput}
                 onChange={(e) => setCustomDomainInput(e.target.value)}
                 placeholder="Enter target website, e.g. nasa.gov or consolto.com"
-                className="bg-transparent text-xs sm:text-sm text-slate-100 placeholder-slate-500 outline-none w-full"
+                className="bg-transparent text-xs sm:text-sm text-slate-100 placeholder-slate-500 outline-none w-full font-mono"
               />
               <button
                 type="submit"
@@ -785,12 +894,12 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
               </button>
             </form>
           ) : (
-            <div className="flex-1 flex items-center gap-2">
+            <form onSubmit={handleSearchMaps} className="flex-1 flex items-center gap-1.5">
               <input
                 type="text"
                 value={mapsKeyword}
                 onChange={(e) => setMapsKeyword(e.target.value)}
-                placeholder="Niche (e.g. Dentists, Aviation)"
+                placeholder="Niche (e.g. Dentists, Roofing)"
                 className="bg-slate-900/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none w-1/2"
               />
               <input
@@ -800,20 +909,39 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
                 placeholder="City (e.g. London, Austin)"
                 className="bg-slate-900/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white outline-none w-1/2"
               />
-            </div>
+              <button
+                type="submit"
+                className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition-colors shrink-0"
+              >
+                Search
+              </button>
+            </form>
           )}
         </div>
 
         {/* Right Action: Sheet Sync & $30 Free Credits CTA */}
         <div className="flex items-center gap-2.5">
-          <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-mono">
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-lg bg-slate-900 border border-white/10 text-xs text-slate-300 hover:border-white/20"
+          >
+            <User className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="font-mono text-[11px] truncate max-w-[120px]">{userAuthEmail}</span>
+          </button>
+
+          <a
+            href="https://docs.google.com/spreadsheets/d/1ic6sIvjHQq6pDEKIwfgqLJszWcboi_UNqDXK1cbo8P0/edit"
+            target="_blank"
+            rel="noreferrer"
+            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[11px] font-mono hover:bg-emerald-500/15"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Sheet Auto-Sync Active
-          </div>
+            Sheet Auto-Sync Active ↗
+          </a>
 
           <button
             onClick={() => setShowCheckoutModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-semibold text-xs transition-all shadow-md shadow-emerald-500/20 active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-semibold text-xs transition-all shadow-md shadow-emerald-500/20 active:scale-95 shrink-0"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>$30 Free Credits</span>
@@ -858,8 +986,16 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
             })}
           </div>
 
-          {/* Auto-Play Toggle */}
+          {/* Actions: CSV Export + Auto-Play Toggle */}
           <div className="flex items-center gap-2 pl-3 border-l border-white/10 shrink-0">
+            <button
+              onClick={handleExportCsv}
+              className="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-white/10 text-xs text-slate-300 flex items-center gap-1.5 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Export CSV</span>
+            </button>
+
             <button
               onClick={() => setIsAutoPlaying(!isAutoPlaying)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
@@ -877,16 +1013,16 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
 
       {/* ── GOOGLE MAPS RADAR DRAWER (When Mode = Maps) ───────────────── */}
       {inputMode === 'maps' && (
-        <section className="bg-slate-950/90 border-b border-emerald-500/20 p-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex items-center justify-between mb-3">
+        <section className="bg-slate-950/95 border-b border-emerald-500/20 p-4 transition-all">
+          <div className="max-w-7xl mx-auto space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-emerald-400" />
                 <h3 className="text-sm font-semibold text-white">
                   Local B2B Business Discovery (Google Maps Engine)
                 </h3>
                 <span className="text-xs text-slate-400">
-                  Showing businesses for &quot;{mapsKeyword}&quot; in &quot;{mapsLocation}&quot;
+                  Found {discoveredMapsLeads.length} High-Ticket targets in &quot;{mapsLocation}&quot;
                 </span>
               </div>
               <span className="text-xs text-emerald-400 font-mono">
@@ -894,7 +1030,49 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Popular Niches & Cities Quick Chips */}
+            <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span className="text-slate-500 font-semibold uppercase mr-1">Quick Niches:</span>
+              {POPULAR_NICHES.slice(0, 5).map((n, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setMapsKeyword(n);
+                    const generated = generateMockMapsLeads(n, mapsLocation);
+                    setDiscoveredMapsLeads(generated);
+                  }}
+                  className={`px-2 py-0.5 rounded-md transition-colors ${
+                    mapsKeyword === n
+                      ? 'bg-emerald-500 text-slate-950 font-bold'
+                      : 'bg-slate-900 border border-white/5 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+
+              <span className="text-slate-500 font-semibold uppercase mx-1">Cities:</span>
+              {POPULAR_CITIES.slice(0, 4).map((c, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setMapsLocation(c);
+                    const generated = generateMockMapsLeads(mapsKeyword, c);
+                    setDiscoveredMapsLeads(generated);
+                  }}
+                  className={`px-2 py-0.5 rounded-md transition-colors ${
+                    mapsLocation === c
+                      ? 'bg-emerald-500 text-slate-950 font-bold'
+                      : 'bg-slate-900 border border-white/5 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+
+            {/* Business Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
               {discoveredMapsLeads.map((lead, idx) => (
                 <div
                   key={idx}
@@ -916,13 +1094,18 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
                     <span className="text-emerald-400 font-mono underline">{lead.domain}</span>
                   </div>
 
-                  <div className="text-[11px] text-slate-400 mb-2 flex items-center gap-1.5">
+                  <div className="text-[11px] text-slate-400 mb-1 flex items-center gap-1.5">
                     <MapPin className="w-3 h-3 text-slate-500" />
                     <span className="truncate">{lead.location}</span>
                   </div>
 
+                  <div className="text-[11px] text-slate-400 mb-2 flex items-center gap-1.5">
+                    <Phone className="w-3 h-3 text-slate-500" />
+                    <span className="font-mono">{lead.phone}</span>
+                  </div>
+
                   <div className="flex items-center justify-between text-[10px] text-slate-500 border-t border-white/5 pt-2">
-                    <span>{lead.reviews} Google Reviews</span>
+                    <span className="text-emerald-300 font-mono">Opp Score: {lead.oppScore}/100</span>
                     <span className="text-emerald-400 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                       Launch GTM &rarr;
                     </span>
@@ -1765,6 +1948,58 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
           )}
         </main>
       </div>
+
+      {/* ── USER AUTH / GOOGLE LOGIN MODAL ─────────────────────────────── */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-[#0C1220] border border-white/10 rounded-2xl max-w-sm w-full p-6 shadow-2xl relative space-y-4">
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="text-center space-y-1">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-slate-950 mx-auto shadow-md">
+                M
+              </div>
+              <h3 className="text-base font-bold text-white pt-2">MapLead Account & Google Sync</h3>
+              <p className="text-xs text-slate-400">
+                Connected to Private Excel/Google Sheet CRM (Sheet 2 Auth & Usage Tracking).
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900 border border-white/5 space-y-2 text-xs font-mono">
+              <div className="flex justify-between text-slate-300">
+                <span className="text-slate-500">Authenticated:</span>
+                <span className="text-emerald-400 font-bold">Yes &bull; Active</span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span className="text-slate-500">Account:</span>
+                <span className="truncate max-w-[170px]">{userAuthEmail}</span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span className="text-slate-500">Subscription:</span>
+                <span className="text-emerald-300">Enterprise $1,000/mo</span>
+              </div>
+              <div className="flex justify-between text-slate-300">
+                <span className="text-slate-500">Credits Remaining:</span>
+                <span className="text-white">750 Hot Leads</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setShowAuthModal(false);
+              }}
+              className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors"
+            >
+              Save &amp; Continue
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── $30 FREE TRIAL ACTIVATION MODAL ────────────────────────────── */}
       {showCheckoutModal && (
