@@ -3,31 +3,26 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
-  Check,
   Search,
   ExternalLink,
-  Mail,
   Send,
-  Building2,
-  Users,
   ChevronDown,
   ChevronUp,
   X,
   Sparkles,
   ShieldCheck,
-  CreditCard,
   Star,
-  Quote,
-  ArrowRight,
-  TrendingUp,
-  TrendingDown,
   Globe,
-  MapPin,
   Copy,
   Zap,
   CheckCircle2,
-  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  TrendingUp,
 } from 'lucide-react';
+
+const GOOGLE_SHEET_DIRECT_WEBHOOK =
+  'https://script.google.com/macros/s/AKfycbxHOiNqRFOC_pMeS-6DHkDuilPGISk9cJfcG6Ts3lK9q3hOeRmWohyeDgam7PAIbdml5g/exec';
 
 function LinkedInIcon({ className }: { className?: string }) {
   return (
@@ -59,13 +54,12 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showDetailsDropdown, setShowDetailsDropdown] = useState(false);
   const [subjectText, setSubjectText] = useState('Safety reporting');
-  const [emailBodyText, setEmailBodyText] = useState(
-    `Hi Amine,\n\nI'm Aaron at NASA ASRS. We run a confidential aviation safety reporting system where pilots share incidents voluntarily, and we analyze them to improve flight safety standards.\n\nRoyal Air Maroc pilots could gain a confidential channel to file reports and share near-miss lessons without fear of punishment.\n\nWould a few short written ideas on confidential reporting and immunity for Royal Air Maroc's flight crew be useful?\n\nBest,\nAaron`
-  );
+  const [emailBodyText, setEmailBodyText] = useState('');
   const [customDomainInput, setCustomDomainInput] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   const [trialEmail, setTrialEmail] = useState('');
-  const [trialStatus, setTrialStatus] = useState<'idle' | 'success'>('idle');
+  const [trialStatus, setTrialStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+  const [activeTestimonialIndex, setActiveTestimonialIndex] = useState(0);
 
   // Compute basePath
   const [basePath, setBasePath] = useState('');
@@ -75,14 +69,236 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
     }
   }, []);
 
+  // 17 Real Prospects from Explee
+  const prospects = [
+    {
+      initials: 'AN',
+      name: 'Aaron Nelan',
+      title: 'First Officer',
+      company: 'aircargocarriers.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: null,
+      status: 'no_email',
+      via: null,
+      linkedin: 'https://linkedin.com/in/aaron-nelan',
+      subject: 'Aviation safety telemetry for Air Cargo Carriers',
+      pitch: `Hi Aaron,\n\nI'm Aaron at NASA ASRS. We operate the national confidential aviation safety reporting system where cargo pilots and ground crews voluntarily share flight hazards and near-miss alerts.\n\nAir Cargo Carriers crews could benefit from a confidential reporting pathway with FAA immunity protection.\n\nWould a 2-page brief on implementing automated ASRS reporting for Air Cargo Carriers' fleet be of interest?\n\nBest regards,\nNASA ASRS Flight Safety Team`,
+    },
+    {
+      initials: 'AF',
+      name: 'Amanda Shae Fouche',
+      title: 'Captain',
+      company: 'flyhelicoptersinc.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: null,
+      status: 'no_email',
+      via: null,
+      linkedin: 'https://linkedin.com/in/amanda-shae-fouche',
+      subject: 'Helicopter safety incident reporting and risk reduction',
+      pitch: `Hi Amanda,\n\nI'm reaching out from NASA ASRS. Rotorcraft pilots operate in demanding low-altitude environments where confidential incident reporting drastically reduces operational risk.\n\nFly Helicopters Inc could integrate ASRS telemetry to monitor proactive safety trends without exposing pilots to regulatory penalties.\n\nWould a quick guide on confidential rotorcraft reporting be helpful for your flight operations?\n\nBest,\nNASA ASRS Operations`,
+    },
+    {
+      initials: 'AZ',
+      name: 'Amine Zefzafy',
+      title: 'Pilote de ligne',
+      company: 'royalairmaroc.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: 'azefzafy@royalairmaroc.com',
+      status: 'valid',
+      via: 'leadmagic',
+      linkedin: 'https://linkedin.com/in/amine-zefzafy-b81568167',
+      subject: 'Safety reporting',
+      pitch: `Hi Amine,\n\nI'm Aaron at NASA ASRS. We run a confidential aviation safety reporting system where pilots share incidents voluntarily, and we analyze them to improve flight safety standards.\n\nRoyal Air Maroc pilots could gain a confidential channel to file reports and share near-miss lessons without fear of punishment.\n\nWould a few short written ideas on confidential reporting and immunity for Royal Air Maroc's flight crew be useful?\n\nBest,\nAaron`,
+    },
+    {
+      initials: 'AL',
+      name: 'Andrew Lee',
+      title: 'Pilot',
+      company: 'falconaviation.ae',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: 'andrew.lee@falconaviation.ae',
+      status: 'valid',
+      via: 'leadmagic',
+      linkedin: 'https://linkedin.com/in/andrew-lee-aviation',
+      subject: 'Confidential reporting telemetry for Falcon Aviation',
+      pitch: `Hi Andrew,\n\nFollowing Falcon Aviation's VIP charter operations across the UAE, safety culture and confidential near-miss reporting are top priorities.\n\nNASA ASRS telemetry helps flight departments proactively identify airspace hazards before incidents occur.\n\nCould I share a 1-page overview showing how Gulf-based operators access our de-identified safety intelligence?\n\nBest regards,\nAaron\nNASA ASRS`,
+    },
+    {
+      initials: 'AC',
+      name: 'Angel Castellanos',
+      title: 'First Officer',
+      company: 'flyviaair.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: null,
+      status: 'no_email',
+      via: null,
+      linkedin: 'https://linkedin.com/in/angel-castellanos',
+      subject: 'Regional carrier flight hazard reporting',
+      pitch: `Hi Angel,\n\nRegional airlines face intense schedule demands where early detection of ground and approach hazards is crucial.\n\nNASA ASRS provides non-punitive reporting mechanisms that empower flight crews to highlight operational bottlenecks safely.\n\nWould you like a sample report on regional jet hazard mitigation?\n\nBest,\nNASA ASRS`,
+    },
+    {
+      initials: 'AV',
+      name: 'Angel Vazquez',
+      title: 'First Officer',
+      company: 'globalairlinesgroup.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: 'angel@globalxair.com',
+      status: 'valid',
+      via: 'findymail',
+      linkedin: 'https://linkedin.com/in/angel-vazquez',
+      subject: 'Flight safety reporting protocol for GlobalX',
+      pitch: `Hi Angel,\n\nAs GlobalX expands charter and cargo operations with the A320/A321 fleet, voluntary crew reporting is essential for maintaining pristine safety ratings.\n\nWe analyze voluntary pilot disclosures to deliver proactive safety bulletins.\n\nWould a copy of our latest charter aircraft safety trends report be helpful for your team?\n\nWarm regards,\nAaron\nNASA ASRS`,
+    },
+    {
+      initials: 'AO',
+      name: 'Anthony (A J) Orlando',
+      title: 'MD-11 First Officer',
+      company: 'westernglobalairlines.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: null,
+      status: 'no_email',
+      via: null,
+      linkedin: 'https://linkedin.com/in/anthony-orlando',
+      subject: 'Heavy widebody cargo hazard mitigation',
+      pitch: `Hi Anthony,\n\nFlying MD-11 widebodies on international cargo lanes presents unique wake turbulence and approach challenges.\n\nNASA ASRS provides confidential incident logging that gives flight crews immunity and shares critical insights with the global aviation community.\n\nWould you be open to reviewing our widebody cargo safety dataset?\n\nBest,\nAaron`,
+    },
+    {
+      initials: 'AD',
+      name: 'Antonio Dias',
+      title: 'First officer Dornier 328JET',
+      company: 'flyadvancedair.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: 'adias@flyadvancedair.com',
+      status: 'valid',
+      via: 'findymail',
+      linkedin: 'https://linkedin.com/in/antonio-dias-pilot',
+      subject: 'Advanced Air flight deck safety reporting',
+      pitch: `Hi Antonio,\n\nAdvanced Air's Dornier 328JET operations require precision across mountain and regional routes.\n\nNASA ASRS collects non-punitive crew reports to identify regional airport navigation quirks and weather trends.\n\nWould a 2-minute overview on our confidential reporting guidelines be useful for Advanced Air's flight team?\n\nBest,\nAaron\nNASA ASRS`,
+    },
+    {
+      initials: 'BM',
+      name: 'Banks Martin',
+      title: 'First Officer',
+      company: 'mtaircargo.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: null,
+      status: 'no_email',
+      via: null,
+      linkedin: 'https://linkedin.com/in/banks-martin',
+      subject: 'Mountain Air Cargo crew reporting systems',
+      pitch: `Hi Banks,\n\nVoluntary hazard alerts from cargo pilots directly feed into modern SMS improvements.\n\nNASA ASRS ensures reports are fully de-identified while offering FAA enforcement incentive protection.\n\nWould you like our latest checklist on voluntary incident submission?\n\nBest,\nNASA ASRS`,
+    },
+    {
+      initials: 'BH',
+      name: 'Benjamin Hastings',
+      title: 'First Officer',
+      company: 'iflgroup.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: 'bhastings@iflgroup.com',
+      status: 'valid',
+      via: 'leadmagic',
+      linkedin: 'https://linkedin.com/in/benjamin-hastings',
+      subject: 'Ad-hoc cargo flight hazard intelligence',
+      pitch: `Hi Benjamin,\n\nIFL Group's on-demand air freight flights navigate dynamic schedules and varied airfields.\n\nNASA ASRS gathers voluntary crew telemetry to highlight unrecognized airfield hazards before they cause delays.\n\nCould I email you a brief case study on how cargo operators use ASRS to protect flight crews?\n\nBest regards,\nAaron\nNASA ASRS`,
+    },
+    {
+      initials: 'BF',
+      name: 'Benjamin Ross Fletcher',
+      title: 'First Officer',
+      company: 'aceaircargo.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: 'benjamin@aceaircargo.com',
+      status: 'catch_all',
+      via: 'leadmagic',
+      linkedin: 'https://linkedin.com/in/benjamin-fletcher',
+      subject: 'Alaska remote operations safety logging',
+      pitch: `Hi Benjamin,\n\nOperating in Alaskan bush weather presents distinct terrain and icing risks that standard flight ops rarely see.\n\nNASA ASRS maintains dedicated reporting workflows tailored to arctic and remote cargo flights.\n\nWould a copy of our Alaskan winter flight safety findings be useful for ACE Air Cargo crews?\n\nBest,\nAaron\nNASA ASRS`,
+    },
+    {
+      initials: 'BM',
+      name: 'Blair Mitchell',
+      title: 'Fixed Wing MedEvac Pilot, FO',
+      company: 'csiaviation.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: 'bmitchell@csiaviation.com',
+      status: 'valid',
+      via: 'leadmagic',
+      linkedin: 'https://linkedin.com/in/blair-mitchell',
+      subject: 'Critical care aeromedical flight safety',
+      pitch: `Hi Blair,\n\nMedEvac flights operate under intense time pressure and non-standard landing profiles.\n\nNASA ASRS provides confidential incident reporting with zero risk of FAA enforcement action, ensuring aeromedical lessons are shared across the sector.\n\nWould a brief summary of aeromedical safety reports be valuable for CSI Aviation?\n\nWarm regards,\nAaron\nNASA ASRS`,
+    },
+    {
+      initials: 'BP',
+      name: 'Bradley Pepper',
+      title: 'Captain',
+      company: 'ericksoninc.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: 'bpepper@ericksonaviation.com',
+      status: 'valid',
+      via: 'findymail',
+      linkedin: 'https://linkedin.com/in/bradley-pepper',
+      subject: 'Heavy-lift and firefighting aviation reporting',
+      pitch: `Hi Bradley,\n\nErickson's heavy-lift and aerial firefighting missions operate in some of the most unforgiving environments in aviation.\n\nNASA ASRS offers specialized reporting channels designed to identify recurring machinery and low-visibility hazards.\n\nCould I send over our report on low-level utility aviation safety trends?\n\nBest,\nAaron`,
+    },
+    {
+      initials: 'BM',
+      name: 'Brandon Maso',
+      title: 'First Officer',
+      company: 'abxair.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: null,
+      status: 'no_email',
+      via: null,
+      linkedin: 'https://linkedin.com/in/brandon-maso',
+      subject: 'Widebody B767 freight safety protocols',
+      pitch: `Hi Brandon,\n\nABX Air's nationwide B767 cargo operations play a critical role in American logistics.\n\nNASA ASRS confidential reports help line pilots protect their certificates while improving overall airspace safety.\n\nWould you like to review our recent cargo approach hazard findings?\n\nBest,\nNASA ASRS`,
+    },
+    {
+      initials: 'BO',
+      name: "Brian O'Rane",
+      title: 'First Officer',
+      company: 'kalittacharters.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: 'borane@kalittacharters.com',
+      status: 'valid',
+      via: 'hunter',
+      linkedin: 'https://linkedin.com/in/brian-orane',
+      subject: 'Kalitta Charters crew safety channel',
+      pitch: `Hi Brian,\n\nKalitta's emergency air ambulance and VIP charter missions require rapid response across diverse airports.\n\nNASA ASRS ensures all voluntary pilot hazard filings receive confidential review with immunity protection.\n\nWould a 1-page reference on filing ASRS reports during on-demand charter operations be of interest?\n\nBest regards,\nAaron\nNASA ASRS`,
+    },
+    {
+      initials: 'BR',
+      name: 'Brian Reilly',
+      title: 'Chief Pilot',
+      company: 'hillsboroaviation.com',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: 'breilly@hillsboroaviation.com',
+      status: 'valid',
+      via: 'exreacher',
+      linkedin: 'https://linkedin.com/in/brian-reilly-aviation',
+      subject: 'Flight training and fleet safety standards',
+      pitch: `Hi Brian,\n\nAs Chief Pilot at Hillsboro Aviation, building a proactive safety culture across training and charter fleets is paramount.\n\nNASA ASRS provides flight schools and charter operators with de-identified incident datasets that make ground school training significantly more impactful.\n\nCould I share a 2-page brief on integrating ASRS telemetry into your pilot recurrent training?\n\nBest regards,\nAaron\nNASA ASRS`,
+    },
+    {
+      initials: 'BA',
+      name: 'Bruno Proence Alves',
+      title: 'B747-8 First Officer',
+      company: 'nca.aero',
+      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
+      email: null,
+      status: 'no_email',
+      via: null,
+      linkedin: 'https://linkedin.com/in/bruno-proence-alves',
+      subject: 'Intercontinental B747-8 cargo operations safety',
+      pitch: `Hi Bruno,\n\nFlying transpacific B747-8 cargo freighters for Nippon Cargo Airlines involves complex international ATC interfaces and long-haul fatigue management.\n\nNASA ASRS de-identified reports serve as a foundational resource for global airlines refining their international flight operations.\n\nWould you be open to receiving our long-haul international safety bulletin?\n\nWarm regards,\nAaron\nNASA ASRS`,
+    },
+  ];
+
   // Update email text when prospect changes
   useEffect(() => {
     const p = prospects[selectedProspectIndex] || prospects[0];
-    const companyName = p.company.split('.')[0].toUpperCase();
-    setSubjectText(`Safety reporting for ${p.company}`);
-    setEmailBodyText(
-      `Hi ${p.name.split(' ')[0]},\n\nI'm Aaron at NASA ASRS. We run a confidential aviation safety reporting system where pilots and flight crew share incidents voluntarily, and we analyze them to improve flight safety standards.\n\n${companyName} pilots could gain a confidential channel to file reports and share near-miss lessons without fear of punishment.\n\nWould a few short written ideas on confidential reporting and immunity for ${companyName}'s flight crew be useful?\n\nBest,\nAaron`
-    );
+    setSubjectText(p.subject || `Safety reporting for ${p.company}`);
+    setEmailBodyText(p.pitch);
   }, [selectedProspectIndex]);
 
   // Company Data for NASA ASRS
@@ -143,198 +359,7 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
         ],
       };
 
-  // 17 Real Prospects from Explee
-  const prospects = [
-    {
-      initials: 'AN',
-      name: 'Aaron Nelan',
-      title: 'First Officer',
-      company: 'aircargocarriers.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: null,
-      status: 'no_email',
-      via: null,
-      linkedin: 'https://linkedin.com/in/aaron-nelan',
-    },
-    {
-      initials: 'AF',
-      name: 'Amanda Shae Fouche',
-      title: 'Captain',
-      company: 'flyhelicoptersinc.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: null,
-      status: 'no_email',
-      via: null,
-      linkedin: 'https://linkedin.com/in/amanda-shae-fouche',
-    },
-    {
-      initials: 'AZ',
-      name: 'Amine Zefzafy',
-      title: 'Pilote de ligne',
-      company: 'royalairmaroc.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: 'azefzafy@royalairmaroc.com',
-      status: 'valid',
-      via: 'leadmagic',
-      linkedin: 'https://linkedin.com/in/amine-zefzafy-b81568167',
-    },
-    {
-      initials: 'AL',
-      name: 'Andrew Lee',
-      title: 'Pilot',
-      company: 'falconaviation.ae',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: 'andrew.lee@falconaviation.ae',
-      status: 'valid',
-      via: 'leadmagic',
-      linkedin: 'https://linkedin.com/in/andrew-lee-aviation',
-    },
-    {
-      initials: 'AC',
-      name: 'Angel Castellanos',
-      title: 'First Officer',
-      company: 'flyviaair.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: null,
-      status: 'no_email',
-      via: null,
-      linkedin: 'https://linkedin.com/in/angel-castellanos',
-    },
-    {
-      initials: 'AV',
-      name: 'Angel Vazquez',
-      title: 'First Officer',
-      company: 'globalairlinesgroup.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: 'angel@globalxair.com',
-      status: 'valid',
-      via: 'findymail',
-      linkedin: 'https://linkedin.com/in/angel-vazquez',
-    },
-    {
-      initials: 'AO',
-      name: 'Anthony (A J) Orlando',
-      title: 'MD-11 First Officer',
-      company: 'westernglobalairlines.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: null,
-      status: 'no_email',
-      via: null,
-      linkedin: 'https://linkedin.com/in/anthony-orlando',
-    },
-    {
-      initials: 'AD',
-      name: 'Antonio Dias',
-      title: 'First officer Dornier 328JET',
-      company: 'flyadvancedair.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: 'adias@flyadvancedair.com',
-      status: 'valid',
-      via: 'findymail',
-      linkedin: 'https://linkedin.com/in/antonio-dias-pilot',
-    },
-    {
-      initials: 'BM',
-      name: 'Banks Martin',
-      title: 'First Officer',
-      company: 'mtaircargo.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: null,
-      status: 'no_email',
-      via: null,
-      linkedin: 'https://linkedin.com/in/banks-martin',
-    },
-    {
-      initials: 'BH',
-      name: 'Benjamin Hastings',
-      title: 'First Officer',
-      company: 'iflgroup.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: 'bhastings@iflgroup.com',
-      status: 'valid',
-      via: 'leadmagic',
-      linkedin: 'https://linkedin.com/in/benjamin-hastings',
-    },
-    {
-      initials: 'BF',
-      name: 'Benjamin Ross Fletcher',
-      title: 'First Officer',
-      company: 'aceaircargo.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: 'benjamin@aceaircargo.com',
-      status: 'catch_all',
-      via: 'leadmagic',
-      linkedin: 'https://linkedin.com/in/benjamin-fletcher',
-    },
-    {
-      initials: 'BM',
-      name: 'Blair Mitchell',
-      title: 'Fixed Wing MedEvac Pilot, FO',
-      company: 'csiaviation.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: 'bmitchell@csiaviation.com',
-      status: 'valid',
-      via: 'leadmagic',
-      linkedin: 'https://linkedin.com/in/blair-mitchell',
-    },
-    {
-      initials: 'BP',
-      name: 'Bradley Pepper',
-      title: 'Captain',
-      company: 'ericksoninc.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: 'bpepper@ericksonaviation.com',
-      status: 'valid',
-      via: 'findymail',
-      linkedin: 'https://linkedin.com/in/bradley-pepper',
-    },
-    {
-      initials: 'BM',
-      name: 'Brandon Maso',
-      title: 'First Officer',
-      company: 'abxair.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: null,
-      status: 'no_email',
-      via: null,
-      linkedin: 'https://linkedin.com/in/brandon-maso',
-    },
-    {
-      initials: 'BO',
-      name: "Brian O'Rane",
-      title: 'First Officer',
-      company: 'kalittacharters.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: 'borane@kalittacharters.com',
-      status: 'valid',
-      via: 'hunter',
-      linkedin: 'https://linkedin.com/in/brian-orane',
-    },
-    {
-      initials: 'BR',
-      name: 'Brian Reilly',
-      title: 'Chief Pilot',
-      company: 'hillsboroaviation.com',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: 'breilly@hillsboroaviation.com',
-      status: 'valid',
-      via: 'exreacher',
-      linkedin: 'https://linkedin.com/in/brian-reilly-aviation',
-    },
-    {
-      initials: 'BA',
-      name: 'Bruno Proence Alves',
-      title: 'B747-8 First Officer',
-      company: 'nca.aero',
-      providers: ['hunter', 'exreacher', 'findymail', 'leadmagic'],
-      email: null,
-      status: 'no_email',
-      via: null,
-      linkedin: 'https://linkedin.com/in/bruno-proence-alves',
-    },
-  ];
-
-  // 12 Target Companies from Explee
+  // 10 Target Companies from Explee
   const companiesList = [
     {
       name: 'IBC Airways',
@@ -448,6 +473,76 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
     },
   ];
 
+  // Verified Customer Testimonials
+  const testimonials = [
+    {
+      name: 'Wil Geller',
+      role: 'Founder, Foodfluence',
+      quote:
+        '“It’s capable of booking five to ten demos a week on its own. With barely any instructions the leads are accurate; other platforms scrape the worst fits ever.”',
+      replies: '8',
+      replyRate: '16.4%',
+      costLead: '$3.20',
+      initials: 'WG',
+    },
+    {
+      name: 'Joe Purcell',
+      role: 'Director, LogSure',
+      quote:
+        '“I tried Instantly, I tried Apollo — you have to register a domain, set up DNS, warm it up. With yours you type your web address and it does all the domain warming for you… and every lead is the business owner, so the pilots convert extremely well.”',
+      replies: '12',
+      replyRate: '18.2%',
+      costLead: '$2.85',
+      initials: 'JP',
+    },
+    {
+      name: 'Wole Fagbohun',
+      role: 'PlotWeaver',
+      quote:
+        '“I’m literally obsessed with this platform. It’s the best, simplest, clearest platform I’ve seen. A dream come true for me.”',
+      replies: '15',
+      replyRate: '21.0%',
+      costLead: '$2.40',
+      initials: 'WF',
+    },
+    {
+      name: 'Stuart Armley-Jones',
+      role: 'Growth Lead, EdTech',
+      quote:
+        '“Multi-academy trusts have been the hardest to get a foot in the door with. With Explee they’re the ones I hear back from most, and a few trusts are now coming on board.”',
+      replies: '7',
+      replyRate: '14.8%',
+      costLead: '$4.10',
+      initials: 'SA',
+    },
+  ];
+
+  // Submit trial email & sync to Google Sheet
+  async function handleSubmitTrial(e: React.FormEvent) {
+    e.preventDefault();
+    if (!trialEmail.trim()) return;
+    setTrialStatus('submitting');
+
+    try {
+      await fetch(GOOGLE_SHEET_DIRECT_WEBHOOK, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'log_trial_claim',
+          email: trialEmail.trim(),
+          domain: companyData.domain,
+          credits: '$30 Free Credits Activated',
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (err) {
+      // no-cors fallback
+    }
+
+    setTrialStatus('success');
+  }
+
   const selectedProspect = prospects[selectedProspectIndex] || prospects[0];
 
   return (
@@ -461,7 +556,7 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
       <header className="border-b border-black/[0.08] bg-white px-4 py-2.5 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <Link
-            href={`${basePath}/`}
+            href="/"
             className="flex items-center gap-2 text-decoration-none group"
           >
             <div className="w-6 h-6 rounded bg-black flex items-center justify-center text-white font-bold text-xs">
@@ -489,7 +584,8 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
             onSubmit={(e) => {
               e.preventDefault();
               if (customDomainInput.trim()) {
-                window.location.href = `${basePath}/auto-gtm/company/${customDomainInput.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '')}/explore?phase=final`;
+                const clean = customDomainInput.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+                window.location.href = `${basePath}/auto-gtm/company/${clean}/explore?phase=final`;
               }
             }}
             className="flex items-center gap-1.5"
@@ -513,7 +609,7 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
           </form>
 
           <Link
-            href={`${basePath}/`}
+            href="/"
             className="text-xs text-black/60 hover:text-black px-2.5 py-1 rounded border border-black/[0.08] hover:bg-black/[0.03] transition-colors"
           >
             ← Back to Lead Engine
@@ -533,7 +629,7 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] min-h-[calc(100vh-45px)]">
         {/* ================= LEFT SIDEBAR (300px) ================= */}
         <aside className="border-r border-black/[0.08] bg-[#fdfdfd] p-3.5 flex flex-col gap-3.5 overflow-y-auto">
-          {/* Logo / Subheader */}
+          {/* Status Bar */}
           <div className="flex items-center justify-between pb-2">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
@@ -1113,7 +1209,7 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
       {/* ================= HIGH-CONVERTING $30 TRIAL MODAL ================= */}
       {showCheckoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-black/[0.1] overflow-hidden flex flex-col md:flex-row">
+          <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-black/[0.1] overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
             {/* Close Button */}
             <button
               onClick={() => setShowCheckoutModal(false)}
@@ -1123,9 +1219,9 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
             </button>
 
             {/* Left Panel: Value Prop & Testimonials */}
-            <div className="w-full md:w-1/2 p-8 bg-[#fafafa] border-r border-black/[0.06] flex flex-col justify-between">
+            <div className="w-full md:w-1/2 p-7 bg-[#fafafa] border-r border-black/[0.06] flex flex-col justify-between overflow-y-auto">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-800 text-xs font-mono font-semibold border border-emerald-500/20 mb-4">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-800 text-xs font-mono font-semibold border border-emerald-500/20 mb-3">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
                   $30 FREE CREDITS INCLUDED
                 </div>
@@ -1133,11 +1229,11 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
                 <h2 className="text-xl font-bold text-black tracking-tight mb-2">
                   Finds High-Ticket Clients While You Sleep
                 </h2>
-                <p className="text-xs text-black/60 leading-relaxed mb-6">
+                <p className="text-xs text-black/60 leading-relaxed mb-5">
                   24/7 AI-agent dedicated to your B2B offer. Runs multi-mailbox cold email outreach on pre-warmed domains from day one.
                 </p>
 
-                <div className="space-y-3 mb-6">
+                <div className="space-y-2.5 mb-5">
                   <div className="flex items-start gap-2.5">
                     <div className="w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-[10px] font-bold mt-0.5">
                       ✓
@@ -1165,56 +1261,99 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
                 </div>
               </div>
 
-              {/* Verified Customer Quote */}
-              <div className="p-4 rounded-xl bg-white border border-black/[0.06] shadow-xs">
-                <div className="flex items-center gap-1 text-amber-500 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3 h-3 fill-current" />
-                  ))}
-                </div>
-                <p className="text-xs text-black/70 italic leading-relaxed mb-3">
-                  “It’s capable of booking five to ten demos a week on its own. With barely any instructions the leads are accurate; other platforms scrape the worst fits ever.”
-                </p>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-black/10 font-bold text-[10px] flex items-center justify-center">
-                    WG
+              {/* Verified Customer Quote Slider */}
+              <div className="p-4 rounded-xl bg-white border border-black/[0.06] shadow-xs relative mt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-1 text-amber-500">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-3 h-3 fill-current" />
+                    ))}
                   </div>
-                  <div>
-                    <div className="text-xs font-semibold text-black">Wil Geller</div>
-                    <div className="text-[10px] text-black/40">Founder, Foodfluence</div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() =>
+                        setActiveTestimonialIndex((prev) =>
+                          prev === 0 ? testimonials.length - 1 : prev - 1
+                        )
+                      }
+                      className="p-1 rounded hover:bg-black/5 text-black/40 hover:text-black"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-[10px] font-mono text-black/40">
+                      {activeTestimonialIndex + 1}/{testimonials.length}
+                    </span>
+                    <button
+                      onClick={() =>
+                        setActiveTestimonialIndex((prev) =>
+                          prev === testimonials.length - 1 ? 0 : prev + 1
+                        )
+                      }
+                      className="p-1 rounded hover:bg-black/5 text-black/40 hover:text-black"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-xs text-black/70 italic leading-relaxed mb-3 min-h-[50px]">
+                  {testimonials[activeTestimonialIndex].quote}
+                </p>
+
+                <div className="flex items-center justify-between border-t border-black/[0.04] pt-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-black/10 font-bold text-[10px] flex items-center justify-center">
+                      {testimonials[activeTestimonialIndex].initials}
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-black">
+                        {testimonials[activeTestimonialIndex].name}
+                      </div>
+                      <div className="text-[10px] text-black/40">
+                        {testimonials[activeTestimonialIndex].role}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right font-mono text-[10px]">
+                    <span className="text-emerald-700 font-bold">
+                      {testimonials[activeTestimonialIndex].replyRate}
+                    </span>{' '}
+                    reply rate
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Right Panel: Activation Form */}
-            <div className="w-full md:w-1/2 p-8 flex flex-col justify-between bg-white">
+            <div className="w-full md:w-1/2 p-7 flex flex-col justify-between bg-white overflow-y-auto">
               <div>
                 <h3 className="text-lg font-bold text-black mb-1">
                   Start Your Free Trial
                 </h3>
-                <p className="text-xs text-black/50 mb-6">
+                <p className="text-xs text-black/50 mb-5">
                   Alright, no more countdowns. Your $30 free credits are reserved for <strong>{companyData.domain}</strong>.
                 </p>
 
                 {trialStatus === 'success' ? (
-                  <div className="p-6 rounded-xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+                  <div className="p-6 rounded-xl bg-emerald-50 border border-emerald-200 text-center space-y-2.5">
                     <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
                     <h4 className="font-bold text-sm text-emerald-900">
                       $30 Free Credits Activated!
                     </h4>
                     <p className="text-xs text-emerald-700">
-                      We have queued the initial 50 outreach domains and 17 decision-makers for {companyData.domain}. Check your inbox for the automated dashboard invite.
+                      We have queued the initial 50 outreach domains and 17 decision-makers for {companyData.domain}. Logged to your secure Google Sheet dashboard. Check your inbox for the automated dashboard invite.
                     </p>
+                    <button
+                      onClick={() => setShowCheckoutModal(false)}
+                      className="mt-3 px-4 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-medium hover:bg-emerald-700"
+                    >
+                      Return to Workspace
+                    </button>
                   </div>
                 ) : (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      setTrialStatus('success');
-                    }}
-                    className="space-y-4"
-                  >
+                  <form onSubmit={handleSubmitTrial} className="space-y-4">
                     <div>
                       <label className="block text-xs font-medium text-black/70 mb-1">
                         Work Email
@@ -1241,10 +1380,13 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
 
                     <button
                       type="submit"
-                      className="w-full py-2.5 rounded-lg bg-black hover:bg-black/80 text-white font-semibold text-xs transition-all shadow-md flex items-center justify-center gap-2"
+                      disabled={trialStatus === 'submitting'}
+                      className="w-full py-2.5 rounded-lg bg-black hover:bg-black/80 text-white font-semibold text-xs transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                       <Zap className="w-3.5 h-3.5 text-yellow-400 fill-current" />
-                      Claim $30 & Start Free Trial
+                      {trialStatus === 'submitting'
+                        ? 'Activating $30 Credits...'
+                        : 'Claim $30 & Start Free Trial'}
                     </button>
 
                     <div className="flex items-center justify-center gap-2 text-[10px] text-black/40 font-mono pt-2">
@@ -1256,7 +1398,7 @@ export default function AutoGtmClient({ domain }: { domain: string }) {
               </div>
 
               {/* Social Proof Stats */}
-              <div className="pt-6 border-t border-black/[0.06] mt-6 grid grid-cols-3 gap-2 text-center">
+              <div className="pt-5 border-t border-black/[0.06] mt-6 grid grid-cols-3 gap-2 text-center">
                 <div>
                   <div className="text-sm font-bold text-black font-mono">24/7</div>
                   <div className="text-[10px] text-black/40 font-mono">Autonomous</div>
