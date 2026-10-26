@@ -587,6 +587,13 @@ export default function Dashboard() {
   const [copiedEmailStatus, setCopiedEmailStatus] = useState(false);
   const [syncingExpleeLead, setSyncingExpleeLead] = useState(false);
 
+  const [basePath, setBasePath] = useState("");
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/maplead-intelligence")) {
+      setBasePath("/maplead-intelligence");
+    }
+  }, []);
+
   const isOwner = user?.email?.toLowerCase().trim() === OWNER_EMAIL;
 
   async function handleRunAutopilotAnalysis(e?: React.FormEvent) {
@@ -1299,6 +1306,17 @@ export default function Dashboard() {
               <ExternalLink className="h-3 w-3 opacity-70" />
             </a>
           )}
+
+          {/* Explee 1:1 Auto-GTM Live Engine Link */}
+          <a
+            href={`${basePath}/auto-gtm/company/nasa.gov/explore?phase=final`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition shadow-sm"
+            title="Launch Explee 1:1 Auto-GTM Autonomous Engine"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="hidden md:inline">⚡ Explee Auto-GTM</span>
+            <span className="md:hidden">Auto-GTM</span>
+          </a>
 
           {/* Pricing Plans Button */}
           <button
@@ -2422,12 +2440,23 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <button
-                onClick={() => setExpleeModalOpen(false)}
-                className="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 transition"
-              >
-                ✕
-              </button>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`${basePath}/auto-gtm/company/${(expleeData?.company?.domain || autopilotUrl || "nasa.gov").replace(/^https?:\/\//, "").replace(/\/.*$/, "")}/explore?phase=final`}
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-sm"
+                  title="Open in standalone 1:1 Explee Auto-GTM page"
+                >
+                  <span>Open Fullscreen 1:1</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+
+                <button
+                  onClick={() => setExpleeModalOpen(false)}
+                  className="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 transition"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             {/* Steps Progress Trail (1 to 6) */}
